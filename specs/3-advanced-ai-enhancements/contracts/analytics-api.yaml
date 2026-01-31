@@ -1,0 +1,199 @@
+# Analytics API Contract
+
+## Analytics Service Interface
+
+### GET /analytics/{user_id}/dashboard
+Retrieves comprehensive analytics dashboard data for a user.
+
+**Path Parameters**:
+- user_id: string (required) - The ID of the user to retrieve analytics for
+
+**Query Parameters**:
+- time_range: string (optional) - Time range for analytics ('daily', 'weekly', 'monthly', 'quarterly', default: 'weekly')
+- include_details: boolean (optional) - Whether to include detailed breakdown data (default: false)
+
+**Headers**:
+- Authorization: Bearer {token} (required)
+
+**Response (200 OK)**:
+```json
+{
+  "user_id": "uuid-string",
+  "time_range": "weekly",
+  "period_start": "2026-01-18T00:00:00Z",
+  "period_end": "2026-01-25T23:59:59Z",
+  "metrics": {
+    "tasks_created": 15,
+    "tasks_completed": 12,
+    "tasks_pending": 8,
+    "completion_rate": 0.80,
+    "average_completion_time_hours": 2.5,
+    "productivity_score": 78.5,
+    "suggestions_accepted_rate": 0.65
+  },
+  "trend_data": [
+    {
+      "date": "2026-01-18",
+      "tasks_created": 2,
+      "tasks_completed": 1,
+      "tasks_pending": 1
+    }
+  ],
+  "priority_breakdown": {
+    "high": 5,
+    "medium": 12,
+    "low": 8
+  },
+  "category_breakdown": {
+    "work": 10,
+    "personal": 8,
+    "health": 3,
+    "finance": 4
+  }
+}
+```
+
+### GET /analytics/{user_id}/suggestions
+Retrieves AI-generated suggestions for a user.
+
+**Path Parameters**:
+- user_id: string (required) - The ID of the user to retrieve suggestions for
+
+**Query Parameters**:
+- limit: integer (optional) - Maximum number of suggestions to return (default: 5, max: 20)
+- include_confidence: boolean (optional) - Whether to include confidence scores (default: true)
+
+**Headers**:
+- Authorization: Bearer {token} (required)
+
+**Response (200 OK)**:
+```json
+{
+  "user_id": "uuid-string",
+  "suggestions": [
+    {
+      "id": "uuid-string",
+      "title": "Buy groceries",
+      "description": "Weekly grocery shopping",
+      "type": "pattern_based",
+      "confidence_score": 0.85,
+      "reasoning": "Based on your pattern of adding this task every Sunday",
+      "suggested_at": "2026-01-25T10:30:00Z",
+      "expires_at": "2026-01-26T23:59:59Z"
+    }
+  ]
+}
+```
+
+### POST /analytics/{user_id}/suggestions/{suggestion_id}/accept
+Accepts an AI-generated suggestion and optionally creates a task.
+
+**Path Parameters**:
+- user_id: string (required) - The ID of the user accepting the suggestion
+- suggestion_id: string (required) - The ID of the suggestion to accept
+
+**Headers**:
+- Authorization: Bearer {token} (required)
+
+**Request Body**:
+```json
+{
+  "create_task": true,
+  "custom_due_date": "2026-01-27T18:00:00Z",
+  "notes": "Custom note for the accepted suggestion"
+}
+```
+
+**Response (200 OK)**:
+```json
+{
+  "success": true,
+  "action": "accepted",
+  "task_created": true,
+  "task_id": "uuid-string-if-created"
+}
+```
+
+### POST /analytics/{user_id}/suggestions/{suggestion_id}/dismiss
+Dismisses an AI-generated suggestion.
+
+**Path Parameters**:
+- user_id: string (required) - The ID of the user dismissing the suggestion
+- suggestion_id: string (required) - The ID of the suggestion to dismiss
+
+**Headers**:
+- Authorization: Bearer {token} (required)
+
+**Response (200 OK)**:
+```json
+{
+  "success": true,
+  "action": "dismissed"
+}
+```
+
+### GET /analytics/{user_id}/reminders
+Retrieves scheduled reminders for a user.
+
+**Path Parameters**:
+- user_id: string (required) - The ID of the user to retrieve reminders for
+
+**Query Parameters**:
+- status: string (optional) - Filter by status ('pending', 'sent', 'all', default: 'pending')
+- time_range: string (optional) - Time range for upcoming reminders ('today', 'week', 'month', default: 'week')
+
+**Headers**:
+- Authorization: Bearer {token} (required)
+
+**Response (200 OK)**:
+```json
+{
+  "user_id": "uuid-string",
+  "reminders": [
+    {
+      "id": "uuid-string",
+      "task_id": "uuid-string",
+      "task_title": "Submit quarterly report",
+      "scheduled_time": "2026-01-26T09:00:00Z",
+      "delivery_method": "notification",
+      "type": "deadline",
+      "created_at": "2026-01-25T08:00:00Z",
+      "sent": false,
+      "acknowledged": false
+    }
+  ]
+}
+```
+
+### POST /analytics/{user_id}/reminders
+Creates a new reminder for a user's task.
+
+**Path Parameters**:
+- user_id: string (required) - The ID of the user creating the reminder
+
+**Headers**:
+- Authorization: Bearer {token} (required)
+
+**Request Body**:
+```json
+{
+  "task_id": "uuid-string",
+  "scheduled_time": "2026-01-26T09:00:00Z",
+  "delivery_method": "notification",
+  "reminder_type": "custom",
+  "custom_message": "Don't forget to submit the report"
+}
+```
+
+**Response (201 Created)**:
+```json
+{
+  "id": "uuid-string",
+  "task_id": "uuid-string",
+  "scheduled_time": "2026-01-26T09:00:00Z",
+  "delivery_method": "notification",
+  "type": "custom",
+  "created_at": "2026-01-25T10:30:00Z",
+  "sent": false
+}
+```

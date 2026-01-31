@@ -1,6 +1,7 @@
-from sqlmodel import create_engine
+from sqlmodel import create_engine, SQLModel
 from sqlalchemy.pool import QueuePool
 import os
+from backend.src.models import Conversation, Message  # Import new models
 
 # Get database URL from environment
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://username:password@localhost:5432/todoapp")
@@ -14,3 +15,7 @@ sync_engine = create_engine(
     pool_pre_ping=True,
     pool_recycle=300,
 )
+
+def create_tables():
+    """Create all database tables"""
+    SQLModel.metadata.create_all(sync_engine)

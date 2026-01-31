@@ -1,0 +1,107 @@
+openapi: 3.0.0
+info:
+  title: Todo Chatbot API
+  version: 1.0.0
+  description: API for AI-powered todo management chatbot
+
+paths:
+  /api/{user_id}/chat:
+    post:
+      summary: Send a message to the chatbot
+      description: Process a user message and return AI response with tool call results
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: Unique identifier for the user
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                conversation_id:
+                  type: integer
+                  description: Optional conversation ID; creates new if not provided
+                  nullable: true
+                message:
+                  type: string
+                  description: User message to process
+                  example: "Add a task to buy groceries"
+              required:
+                - message
+      responses:
+        '200':
+          description: Successful response from AI agent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  conversation_id:
+                    type: integer
+                    description: ID of the conversation (newly created if not provided)
+                  response:
+                    type: string
+                    description: AI-generated response
+                    example: "I've added the task 'Buy groceries' for you."
+                  tool_calls:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        tool:
+                          type: string
+                          description: Name of the tool that was called
+                        status:
+                          type: string
+                          description: Status of the tool call (success/error)
+                        result:
+                          type: object
+                          description: Result of the tool call
+                          additionalProperties: true
+                required:
+                  - conversation_id
+                  - response
+                  - tool_calls
+        '400':
+          description: Bad request - invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized - invalid or missing token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - user attempting to access another user's data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+        code:
+          type: string
+          description: Error code
+      required:
+        - error

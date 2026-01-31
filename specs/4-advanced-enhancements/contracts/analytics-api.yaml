@@ -1,0 +1,287 @@
+# Analytics API Contract
+
+## Analytics Service Interface
+
+### GET /analytics/{user_id}/dashboard
+Retrieves comprehensive analytics dashboard data for a user.
+
+**Path Parameters**:
+- user_id: string (required) - The ID of the user to retrieve analytics for
+
+**Query Parameters**:
+- time_range: string (optional) - Time range for analytics ('day', 'week', 'month', 'quarter', 'year', default: 'week')
+- include_details: boolean (optional) - Whether to include detailed breakdown data (default: false)
+
+**Headers**:
+- Authorization: Bearer {token} (required)
+
+**Response (200 OK)**:
+```json
+{
+  "user_id": "uuid-string",
+  "time_range": "weekly",
+  "period_start": "2026-01-18T00:00:00Z",
+  "period_end": "2026-01-25T23:59:59Z",
+  "metrics": {
+    "total_tasks": 25,
+    "tasks_created": 15,
+    "tasks_completed": 12,
+    "tasks_pending": 8,
+    "tasks_missed": 0,
+    "completion_rate_percent": 80.0,
+    "average_completion_time_days": 2.5,
+    "most_productive_day": "Tuesday"
+  },
+  "breakdown": {
+    "by_priority": {
+      "high": 5,
+      "medium": 12,
+      "low": 8
+    },
+    "by_status": {
+      "completed": 12,
+      "pending": 8
+    }
+  },
+  "trend_data": [
+    {
+      "date": "2026-01-18",
+      "tasks_created": 2,
+      "tasks_completed": 1,
+      "tasks_pending": 1
+    }
+  ],
+  "insights": [
+    "You've created 15 tasks in this period.",
+    "Excellent! Your task completion rate is very high.",
+    "On average, you complete tasks in 2.5 days.",
+    "You tend to create many high-priority tasks."
+  ]
+}
+```
+
+### GET /analytics/{user_id}/trends
+Retrieves trend data for analytics charts.
+
+**Path Parameters**:
+- user_id: string (required) - The ID of the user to retrieve trend data for
+
+**Query Parameters**:
+- time_period: string (optional) - Time period for trends ('day', 'week', 'month', 'quarter', default: 'week')
+- metric_type: string (optional) - Type of metrics to retrieve ('completion', 'creation', 'productivity', default: 'all')
+
+**Headers**:
+- Authorization: Bearer {token} (required)
+
+**Response (200 OK)**:
+```json
+{
+  "user_id": "uuid-string",
+  "time_period": "week",
+  "metric_type": "all",
+  "trend_data": [
+    {
+      "date": "2026-01-19",
+      "tasks_created": 3,
+      "tasks_completed": 2,
+      "productivity_score": 85.5
+    }
+  ]
+}
+```
+
+### GET /analytics/{user_id}/productivity-score
+Calculates and returns user's productivity score.
+
+**Path Parameters**:
+- user_id: string (required) - The ID of the user to calculate productivity for
+
+**Headers**:
+- Authorization: Bearer {token} (required)
+
+**Response (200 OK)**:
+```json
+{
+  "user_id": "uuid-string",
+  "productivity_score": 87.5,
+  "calculation_factors": {
+    "completion_rate": 80.0,
+    "completion_speed": 90.0,
+    "priority_management": 82.0
+  },
+  "timestamp": "2026-01-25T10:30:00Z"
+}
+```
+
+## Suggestion Service Interface
+
+### GET /suggestions/{user_id}/list
+Retrieves AI-generated suggestions for a user.
+
+**Path Parameters**:
+- user_id: string (required) - The ID of the user to retrieve suggestions for
+
+**Query Parameters**:
+- limit: integer (optional) - Maximum number of suggestions to return (default: 5, max: 20)
+- suggestion_type: string (optional) - Filter by suggestion type ('pattern_based', 'priority_based', 'deadline_based', 'contextual', 'all', default: 'all')
+- status: string (optional) - Filter by status ('pending', 'accepted', 'dismissed', 'all', default: 'pending')
+
+**Headers**:
+- Authorization: Bearer {token} (required)
+
+**Response (200 OK)**:
+```json
+{
+  "user_id": "uuid-string",
+  "suggestion_type": "all",
+  "status_filter": "pending",
+  "limit": 5,
+  "suggestions": [
+    {
+      "id": "uuid-string",
+      "title": "Buy groceries",
+      "description": "Based on your pattern of adding this task regularly",
+      "type": "pattern_based",
+      "confidence": 0.85,
+      "reasoning": "You usually add grocery shopping tasks on Sundays (appears 4 times in your history)",
+      "created_at": "2026-01-25T09:00:00Z"
+    }
+  ],
+  "count": 1
+}
+```
+
+### POST /suggestions/{suggestion_id}/accept
+Accepts a suggestion and optionally creates a task.
+
+**Path Parameters**:
+- suggestion_id: string (required) - The ID of the suggestion to accept
+
+**Headers**:
+- Authorization: Bearer {token} (required)
+
+**Request Body**:
+```json
+{
+  "create_task": true,
+  "custom_due_date": "2026-01-27T18:00:00Z",
+  "notes": "Custom notes for the created task"
+}
+```
+
+**Response (200 OK)**:
+```json
+{
+  "success": true,
+  "message": "Suggestion accepted and task created",
+  "suggestion_id": "uuid-string",
+  "task_created": true,
+  "task_id": "new-task-uuid-string"
+}
+```
+
+### POST /suggestions/{suggestion_id}/dismiss
+Dismisses a suggestion.
+
+**Path Parameters**:
+- suggestion_id: string (required) - The ID of the suggestion to dismiss
+
+**Headers**:
+- Authorization: Bearer {token} (required)
+
+**Response (200 OK)**:
+```json
+{
+  "success": true,
+  "message": "Suggestion dismissed",
+  "suggestion_id": "uuid-string"
+}
+```
+
+## Reminder Service Interface
+
+### POST /reminders/{user_id}/create
+Creates a new reminder for a task.
+
+**Path Parameters**:
+- user_id: string (required) - The ID of the user creating the reminder
+
+**Headers**:
+- Authorization: Bearer {token} (required)
+
+**Request Body**:
+```json
+{
+  "task_id": "uuid-string",
+  "scheduled_time": "2026-01-26T09:00:00Z",
+  "delivery_method": "notification",
+  "reminder_type": "deadline",
+  "custom_message": "Don't forget about this important task"
+}
+```
+
+**Response (201 Created)**:
+```json
+{
+  "success": true,
+  "message": "Reminder created successfully",
+  "reminder_id": "uuid-string",
+  "task_id": "uuid-string",
+  "scheduled_time": "2026-01-26T09:00:00Z",
+  "status": "pending"
+}
+```
+
+### GET /reminders/{user_id}/upcoming
+Retrieves upcoming reminders for a user.
+
+**Path Parameters**:
+- user_id: string (required) - The ID of the user to retrieve reminders for
+
+**Query Parameters**:
+- status: string (optional) - Filter by status ('pending', 'sent', 'all', default: 'pending')
+- time_range: string (optional) - Time range for upcoming reminders ('today', 'week', 'month', default: 'week')
+
+**Headers**:
+- Authorization: Bearer {token} (required)
+
+**Response (200 OK)**:
+```json
+{
+  "user_id": "uuid-string",
+  "status_filter": "pending",
+  "time_range": "week",
+  "reminders": [
+    {
+      "id": "uuid-string",
+      "task_id": "uuid-string",
+      "task_title": "Submit quarterly report",
+      "scheduled_time": "2026-01-26T09:00:00Z",
+      "delivery_method": "notification",
+      "type": "deadline",
+      "sent": false,
+      "created_at": "2026-01-25T08:00:00Z"
+    }
+  ],
+  "count": 1
+}
+```
+
+### PATCH /reminders/{reminder_id}/acknowledge
+Marks a reminder as acknowledged by the user.
+
+**Path Parameters**:
+- reminder_id: string (required) - The ID of the reminder to acknowledge
+
+**Headers**:
+- Authorization: Bearer {token} (required)
+
+**Response (200 OK)**:
+```json
+{
+  "success": true,
+  "message": "Reminder acknowledged",
+  "reminder_id": "uuid-string",
+  "acknowledged_at": "2026-01-25T10:30:00Z"
+}
+```

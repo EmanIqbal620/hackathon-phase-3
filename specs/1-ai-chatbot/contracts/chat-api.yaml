@@ -1,0 +1,231 @@
+openapi: 3.0.3
+info:
+  title: AI-Powered Todo Chatbot API
+  description: API for conversational todo management using AI
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+    description: Development server
+  - url: https://api.todoapp.com
+    description: Production server
+
+paths:
+  /api/{user_id}/chat:
+    post:
+      summary: Send a message to the AI chatbot
+      description: Process user message and return AI response with any task operations
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: The ID of the user sending the message
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - message
+                - conversation_id
+              properties:
+                message:
+                  type: string
+                  description: The user's message to the chatbot
+                  example: "Add a task to buy groceries"
+                conversation_id:
+                  type: string
+                  format: uuid
+                  description: The ID of the conversation (omit for new conversation)
+                  example: "123e4567-e89b-12d3-a456-426614174000"
+      responses:
+        '200':
+          description: Successful response from the AI chatbot
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - response
+                  - conversation_id
+                  - tool_usage
+                properties:
+                  response:
+                    type: string
+                    description: The AI's response to the user
+                    example: "I've added the task 'buy groceries' to your list."
+                  conversation_id:
+                    type: string
+                    format: uuid
+                    description: The ID of the conversation
+                    example: "123e4567-e89b-12d3-a456-426614174000"
+                  tool_usage:
+                    type: object
+                    description: Information about MCP tools used by the agent
+                    properties:
+                      tools_called:
+                        type: array
+                        items:
+                          type: string
+                        example: ["add_task"]
+                      success:
+                        type: boolean
+                        example: true
+        '401':
+          description: Unauthorized - Invalid or missing JWT token
+        '403':
+          description: Forbidden - User does not have access to this user_id
+        '404':
+          description: Not Found - Conversation does not exist
+        '500':
+          description: Internal Server Error
+
+  /api/{user_id}/conversations:
+    get:
+      summary: List user's conversations
+      description: Retrieve a list of conversation IDs for the user
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: The ID of the user
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          required: false
+          description: Maximum number of conversations to return
+          schema:
+            type: integer
+            default: 10
+        - name: offset
+          in: query
+          required: false
+          description: Number of conversations to skip
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of user's conversations
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - conversations
+                  - total
+                properties:
+                  conversations:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                        - id
+                        - created_at
+                        - updated_at
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                          description: Conversation ID
+                        created_at:
+                          type: string
+                          format: date-time
+                          description: When the conversation was created
+                        updated_at:
+                          type: string
+                          format: date-time
+                          description: When the conversation was last updated
+                  total:
+                    type: integer
+                    description: Total number of conversations
+        '401':
+          description: Unauthorized - Invalid or missing JWT token
+        '403':
+          description: Forbidden - User does not have access to this user_id
+        '500':
+          description: Internal Server Error
+
+  /api/{user_id}/conversations/{conversation_id}:
+    get:
+      summary: Get conversation history
+      description: Retrieve the message history for a specific conversation
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: The ID of the user
+          schema:
+            type: string
+            format: uuid
+        - name: conversation_id
+          in: path
+          required: true
+          description: The ID of the conversation
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Conversation message history
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - messages
+                properties:
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                        - id
+                        - role
+                        - content
+                        - created_at
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                          description: Message ID
+                        role:
+                          type: string
+                          enum: [user, assistant]
+                          description: Who sent the message
+                        content:
+                          type: string
+                          description: Message content
+                        created_at:
+                          type: string
+                          format: date-time
+                          description: When the message was created
+        '401':
+          description: Unauthorized - Invalid or missing JWT token
+        '403':
+          description: Forbidden - User does not have access to this conversation
+        '404':
+          description: Not Found - Conversation does not exist
+        '500':
+          description: Internal Server Error
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Error message

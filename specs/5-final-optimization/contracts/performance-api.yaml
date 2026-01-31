@@ -1,0 +1,340 @@
+# Performance & Optimization API Contracts
+
+## Performance Metrics Service Interface
+
+### GET /performance/{user_id}/metrics
+Retrieves performance metrics for a user's application usage.
+
+**Path Parameters**:
+- user_id: string (required) - The ID of the user to retrieve metrics for
+
+**Query Parameters**:
+- metric_type: string (optional) - Filter by metric type ('page_load', 'api_response', 'animation_frame', 'interaction_response', 'all')
+- time_range: string (optional) - Time range for metrics ('day', 'week', 'month', default: 'week')
+- sort_order: string (optional) - Sort order ('asc', 'desc', default: 'desc')
+
+**Headers**:
+- Authorization: Bearer {token} (required)
+
+**Response (200 OK)**:
+```json
+{
+  "user_id": "uuid-string",
+  "time_range": "week",
+  "metric_type": "all",
+  "metrics": [
+    {
+      "id": "uuid-string",
+      "metric_type": "page_load",
+      "value": 1.8,
+      "unit": "seconds",
+      "page_route": "/dashboard",
+      "timestamp": "2026-01-29T10:30:00Z",
+      "device_info": "Desktop Chrome",
+      "network_condition": "fast_3g"
+    }
+  ],
+  "summary": {
+    "average_page_load_time": 1.8,
+    "average_api_response_time": 0.4,
+    "average_fps": 59.2,
+    "total_measurements": 45
+  }
+}
+```
+
+### POST /performance/{user_id}/record
+Records a performance metric from the frontend.
+
+**Path Parameters**:
+- user_id: string (required) - The ID of the user recording the metric
+
+**Headers**:
+- Authorization: Bearer {token} (required)
+
+**Request Body**:
+```json
+{
+  "metric_type": "page_load",
+  "value": 1.8,
+  "unit": "seconds",
+  "page_route": "/dashboard",
+  "api_endpoint": null,
+  "device_info": "Desktop Chrome",
+  "network_condition": "fast_3g"
+}
+```
+
+**Response (201 Created)**:
+```json
+{
+  "success": true,
+  "message": "Performance metric recorded successfully",
+  "metric_id": "uuid-string",
+  "timestamp": "2026-01-29T10:30:00Z"
+}
+```
+
+## Accessibility Settings Service Interface
+
+### GET /accessibility/{user_id}/settings
+Retrieves accessibility settings for a user.
+
+**Path Parameters**:
+- user_id: string (required) - The ID of the user to retrieve settings for
+
+**Headers**:
+- Authorization: Bearer {token} (required)
+
+**Response (200 OK)**:
+```json
+{
+  "user_id": "uuid-string",
+  "settings": {
+    "high_contrast_enabled": false,
+    "reduced_motion_enabled": false,
+    "screen_reader_optimized": true,
+    "keyboard_navigation_only": false,
+    "font_size_preference": "normal"
+  },
+  "updated_at": "2026-01-29T09:15:00Z"
+}
+```
+
+### PUT /accessibility/{user_id}/settings
+Updates accessibility settings for a user.
+
+**Path Parameters**:
+- user_id: string (required) - The ID of the user to update settings for
+
+**Headers**:
+- Authorization: Bearer {token} (required)
+
+**Request Body**:
+```json
+{
+  "high_contrast_enabled": true,
+  "reduced_motion_enabled": true,
+  "font_size_preference": "large"
+}
+```
+
+**Response (200 OK)**:
+```json
+{
+  "success": true,
+  "message": "Accessibility settings updated successfully",
+  "settings": {
+    "high_contrast_enabled": true,
+    "reduced_motion_enabled": true,
+    "screen_reader_optimized": true,
+    "keyboard_navigation_only": false,
+    "font_size_preference": "large"
+  },
+  "updated_at": "2026-01-29T10:30:00Z"
+}
+```
+
+## Micro-Features Service Interface
+
+### GET /micro-features/user/{user_id}/preferences
+Retrieves user's micro-feature preferences.
+
+**Path Parameters**:
+- user_id: string (required) - The ID of the user to retrieve preferences for
+
+**Headers**:
+- Authorization: Bearer {token} (required)
+
+**Response (200 OK)**:
+```json
+{
+  "user_id": "uuid-string",
+  "preferences": [
+    {
+      "feature_id": "uuid-string",
+      "name": "keyboard_shortcuts",
+      "description": "Enable keyboard shortcuts for common actions",
+      "category": "navigation",
+      "is_enabled": true,
+      "custom_settings": {
+        "shortcut_mappings": {
+          "n": "new_task",
+          "s": "search"
+        }
+      }
+    }
+  ]
+}
+```
+
+### PATCH /micro-features/user/{user_id}/preferences/{feature_id}
+Updates a specific micro-feature preference for a user.
+
+**Path Parameters**:
+- user_id: string (required) - The ID of the user updating preferences
+- feature_id: string (required) - The ID of the micro-feature to update
+
+**Headers**:
+- Authorization: Bearer {token} (required)
+
+**Request Body**:
+```json
+{
+  "is_enabled": true,
+  "custom_settings": {
+    "shortcut_mappings": {
+      "n": "new_task",
+      "s": "search",
+      "d": "delete_task"
+    }
+  }
+}
+```
+
+**Response (200 OK)**:
+```json
+{
+  "success": true,
+  "message": "Micro-feature preference updated",
+  "feature_id": "uuid-string",
+  "is_enabled": true
+}
+```
+
+### GET /micro-features/list
+Retrieves available micro-features.
+
+**Headers**:
+- Authorization: Bearer {token} (required)
+
+**Response (200 OK)**:
+```json
+{
+  "features": [
+    {
+      "id": "uuid-string",
+      "name": "keyboard_shortcuts",
+      "description": "Enable keyboard shortcuts for common actions",
+      "is_enabled_by_default": true,
+      "category": "navigation",
+      "keyboard_shortcut": null
+    },
+    {
+      "id": "uuid-string",
+      "name": "quick_add",
+      "description": "Add tasks quickly with a single input field",
+      "is_enabled_by_default": true,
+      "category": "productivity",
+      "keyboard_shortcut": "q"
+    }
+  ],
+  "count": 2
+}
+```
+
+## UX Enhancement Tracking Interface
+
+### POST /ux-enhancements/{user_id}/track
+Records user interaction with UX enhancements.
+
+**Path Parameters**:
+- user_id: string (required) - The ID of the user interacting with enhancements
+
+**Headers**:
+- Authorization: Bearer {token} (required)
+
+**Request Body**:
+```json
+{
+  "enhancement_type": "keyboard_shortcut",
+  "feature_name": "quick_task_creation",
+  "usage_count": 1,
+  "effectiveness_rating": 0.9
+}
+```
+
+**Response (201 Created)**:
+```json
+{
+  "success": true,
+  "message": "UX enhancement usage tracked",
+  "enhancement_id": "uuid-string",
+  "created_at": "2026-01-29T10:30:00Z"
+}
+```
+
+### GET /ux-enhancements/{user_id}/analytics
+Retrieves analytics about user's interaction with UX enhancements.
+
+**Path Parameters**:
+- user_id: string (required) - The ID of the user to retrieve analytics for
+
+**Headers**:
+- Authorization: Bearer {token} (required)
+
+**Response (200 OK)**:
+```json
+{
+  "user_id": "uuid-string",
+  "analytics": {
+    "total_enhancement_interactions": 125,
+    "most_used_enhancement": "keyboard_shortcuts",
+    "enhancement_effectiveness": {
+      "keyboard_shortcuts": 0.85,
+      "quick_add": 0.78,
+      "drag_drop": 0.92
+    },
+    "adoption_rate": 0.75
+  }
+}
+```
+
+## Health & Performance Check Interface
+
+### GET /health/performance
+Checks the overall performance and optimization status of the system.
+
+**Headers**:
+- Authorization: Bearer {token} (required)
+
+**Response (200 OK)**:
+```json
+{
+  "status": "healthy",
+  "performance_metrics": {
+    "average_response_time": 0.35,
+    "current_users": 1250,
+    "uptime": 99.95,
+    "load_average": 0.42
+  },
+  "optimization_status": {
+    "frontend_bundle_size": "1.8MB",
+    "page_load_time": 1.8,
+    "animation_performance": "60fps",
+    "accessibility_compliance": "WCAG_2.1_AA"
+  },
+  "timestamp": "2026-01-29T10:30:00Z"
+}
+```
+
+### GET /health/accessibility
+Checks the accessibility compliance status of the system.
+
+**Headers**:
+- Authorization: Bearer {token} (required)
+
+**Response (200 OK)**:
+```json
+{
+  "status": "compliant",
+  "compliance_level": "WCAG_2.1_AA",
+  "audit_results": {
+    "color_contrast_pass_rate": 100,
+    "keyboard_navigation_pass_rate": 100,
+    "aria_labels_present": 98.5,
+    "screen_reader_compatible": true
+  },
+  "last_audit": "2026-01-29T09:00:00Z"
+}
+```

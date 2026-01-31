@@ -4,6 +4,7 @@ from sqlmodel import SQLModel
 
 # Import routers
 from .api.routes import auth, user, tasks
+from .api.routers import chat, analytics
 
 app = FastAPI(
     title="Todo App API",
@@ -14,7 +15,13 @@ app = FastAPI(
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, replace with your frontend URL(s)
+    allow_origins=[
+        "http://localhost:3000",  # Local frontend development
+        "https://emaniqbal-todo-phase2.hf.space",  # Deployed frontend
+        "http://localhost:8000",  # Local backend (for testing)
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:8000",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -24,6 +31,8 @@ app.add_middleware(
 app.include_router(auth.router, prefix="/api")
 app.include_router(user.router, prefix="/api")
 app.include_router(tasks.router, prefix="/api")
+app.include_router(chat.router, prefix="/api")
+app.include_router(analytics.router, prefix="/api")
 
 # Public routes that should never require payment
 PUBLIC_ROUTES = {

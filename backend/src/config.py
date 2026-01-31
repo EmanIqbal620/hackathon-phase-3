@@ -22,5 +22,10 @@ class Config:
     # Database Configuration
     DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./todo_app.db")  # Default to SQLite for development
 
+    # AI Provider Configuration
+    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+    OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
+    OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
+
 # Create a global config instance
 config = Config()

@@ -1,0 +1,477 @@
+openapi: 3.0.3
+info:
+  title: Advanced AI Chatbot Analytics API
+  description: API for AI-driven task suggestions, reminders, and analytics in the Todo Chatbot
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+    description: Development server
+  - url: https://api.todoapp.com
+    description: Production server
+
+paths:
+  /api/{user_id}/suggestions:
+    get:
+      summary: Get AI-generated task suggestions
+      description: Retrieve AI-generated task suggestions based on user's task patterns and behavior
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: The ID of the user requesting suggestions
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          required: false
+          description: Maximum number of suggestions to return
+          schema:
+            type: integer
+            default: 5
+            minimum: 1
+            maximum: 20
+      responses:
+        '200':
+          description: List of AI-generated task suggestions
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - suggestions
+                properties:
+                  suggestions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Suggestion'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/{user_id}/reminders:
+    get:
+      summary: Get scheduled reminders
+      description: Retrieve scheduled reminders for the user
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: The ID of the user
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          required: false
+          description: Filter by reminder status
+          schema:
+            type: string
+            enum: [pending, sent, delivered, failed]
+            default: pending
+      responses:
+        '200':
+          description: List of reminders
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - reminders
+                properties:
+                  reminders:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Reminder'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/{user_id}/analytics:
+    get:
+      summary: Get user analytics
+      description: Retrieve productivity analytics and metrics for the user
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: The ID of the user
+          schema:
+            type: string
+            format: uuid
+        - name: start_date
+          in: query
+          required: false
+          description: Start date for analytics period (ISO 8601 format)
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          required: false
+          description: End date for analytics period (ISO 8601 format)
+          schema:
+            type: string
+            format: date
+        - name: granularity
+          in: query
+          required: false
+          description: Granularity of analytics data
+          schema:
+            type: string
+            enum: [daily, weekly, monthly]
+            default: weekly
+      responses:
+        '200':
+          description: Analytics data for the user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsData'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/{user_id}/patterns:
+    get:
+      summary: Get identified task patterns
+      description: Retrieve patterns identified in the user's task behavior
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: The ID of the user
+          schema:
+            type: string
+            format: uuid
+        - name: active_only
+          in: query
+          required: false
+          description: Whether to return only active patterns
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: List of identified task patterns
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - patterns
+                properties:
+                  patterns:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TaskPattern'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/{user_id}/preferences:
+    put:
+      summary: Update user preferences
+      description: Update notification and reminder preferences for the user
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: The ID of the user
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserPreferences'
+      responses:
+        '200':
+          description: Updated preferences
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPreferences'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    Suggestion:
+      type: object
+      required:
+        - id
+        - content
+        - confidence_score
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the suggestion
+        content:
+          type: string
+          description: The suggested task content
+        confidence_score:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: AI's confidence in this suggestion
+        suggestion_reason:
+          type: string
+          description: Explanation of why this suggestion was made
+        pattern_match_type:
+          type: string
+          description: Type of pattern that triggered this suggestion
+        is_accepted:
+          type: boolean
+          description: Whether the user accepted this suggestion
+        accepted_at:
+          type: string
+          format: date-time
+          description: When the suggestion was accepted (if applicable)
+        created_at:
+          type: string
+          format: date-time
+          description: When the suggestion was generated
+
+    Reminder:
+      type: object
+      required:
+        - id
+        - task_id
+        - scheduled_time
+        - reminder_type
+        - delivery_status
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the reminder
+        task_id:
+          type: string
+          format: uuid
+          description: ID of the task this reminder is for
+        scheduled_time:
+          type: string
+          format: date-time
+          description: When the reminder should be sent
+        reminder_type:
+          type: string
+          enum: [deadline, priority, followup, pattern]
+          description: Type of reminder trigger
+        delivery_status:
+          type: string
+          enum: [pending, sent, delivered, failed]
+          description: Current status of the reminder
+        sent_at:
+          type: string
+          format: date-time
+          description: When the reminder was sent (if applicable)
+        delivery_attempts:
+          type: integer
+          description: Number of delivery attempts made
+        created_at:
+          type: string
+          format: date-time
+          description: When the reminder was created
+
+    AnalyticsData:
+      type: object
+      required:
+        - user_id
+        - period_start
+        - period_end
+        - tasks_completed
+        - tasks_pending
+        - completion_rate
+        - productivity_score
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          description: ID of the user this analytics data belongs to
+        period_start:
+          type: string
+          format: date
+          description: Start date of the analytics period
+        period_end:
+          type: string
+          format: date
+          description: End date of the analytics period
+        tasks_completed:
+          type: integer
+          description: Number of tasks completed in this period
+        tasks_pending:
+          type: integer
+          description: Number of tasks still pending in this period
+        completion_rate:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Percentage of tasks completed (0.0 to 1.0)
+        productivity_score:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 10.0
+          description: Calculated productivity score
+        avg_completion_time:
+          type: number
+          description: Average time taken to complete tasks (in hours)
+        peak_productivity_hour:
+          type: integer
+          minimum: 0
+          maximum: 23
+          description: Hour of day (0-23) when user is most productive
+        category_breakdown:
+          type: object
+          description: Breakdown of tasks by category/type
+          additionalProperties:
+            type: integer
+        trend_direction:
+          type: string
+          enum: [up, down, stable]
+          description: Direction of productivity trend
+        created_at:
+          type: string
+          format: date-time
+          description: When this analytics record was created
+        updated_at:
+          type: string
+          format: date-time
+          description: When this analytics record was last updated
+
+    TaskPattern:
+      type: object
+      required:
+        - id
+        - pattern_type
+        - pattern_identifier
+        - pattern_frequency
+        - pattern_confidence
+        - pattern_attributes
+        - is_active
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the pattern
+        pattern_type:
+          type: string
+          description: Type of pattern (e.g., 'recurring', 'deadline', 'priority')
+        pattern_identifier:
+          type: string
+          description: Unique identifier for this specific pattern
+        pattern_frequency:
+          type: string
+          description: How often the pattern occurs (e.g., 'daily', 'weekly', 'monthly')
+        pattern_confidence:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Confidence in this pattern
+        pattern_attributes:
+          type: object
+          description: Additional attributes of the pattern
+          additionalProperties: true
+        is_active:
+          type: boolean
+          description: Whether this pattern should generate suggestions
+        last_occurrence:
+          type: string
+          format: date-time
+          description: When this pattern last occurred
+        next_expected:
+          type: string
+          format: date-time
+          description: When this pattern is next expected to occur
+        created_at:
+          type: string
+          format: date-time
+          description: When the pattern was first identified
+        updated_at:
+          type: string
+          format: date-time
+          description: When the pattern was last updated
+
+    UserPreferences:
+      type: object
+      properties:
+        reminder_sensitivity:
+          type: string
+          enum: [low, medium, high]
+          default: medium
+          description: How frequently to receive reminders
+        notification_channels:
+          type: array
+          items:
+            type: string
+            enum: [email, push, sms]
+          description: Preferred notification channels
+        analytics_visibility:
+          type: boolean
+          default: true
+          description: Whether to show analytics in dashboard
+        ai_suggestions_enabled:
+          type: boolean
+          default: true
+          description: Whether to receive AI-generated suggestions
+
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Error message
+
+  responses:
+    Unauthorized:
+      description: Unauthorized - Invalid or missing JWT token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Forbidden - User does not have access to this resource
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalServerError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

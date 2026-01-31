@@ -24,6 +24,7 @@ def create_tables():
     print("Importing models...")
     from src.models.user import User
     from src.models.task import Task
+    from src.models.conversation import Conversation, Message
 
     print("Creating tables...")
     SQLModel.metadata.create_all(engine)
