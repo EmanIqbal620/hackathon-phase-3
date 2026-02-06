@@ -2,11 +2,10 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies required for psycopg2
+# Install system dependencies required for psycopg2-binary and other packages
 RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
-    postgresql-dev \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
