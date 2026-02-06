@@ -27,7 +27,7 @@ def create_task(task: TaskCreate, current_user=Depends(get_current_user)):
         return db_task
 
 @router.get("/tasks/{task_id}", response_model=TaskRead)
-def get_task(task_id: str, current_user=Depends(get_current_user)):
+def get_task(task_id: int, current_user=Depends(get_current_user)):
     with Session(sync_engine) as session:
         statement = select(Task).where(Task.id == task_id, Task.user_id == current_user.id)
         task = session.exec(statement).first()
@@ -36,7 +36,7 @@ def get_task(task_id: str, current_user=Depends(get_current_user)):
         return task
 
 @router.put("/tasks/{task_id}", response_model=TaskRead)
-def update_task(task_id: str, task_update: TaskUpdate, current_user=Depends(get_current_user)):
+def update_task(task_id: int, task_update: TaskUpdate, current_user=Depends(get_current_user)):
     with Session(sync_engine) as session:
         statement = select(Task).where(Task.id == task_id, Task.user_id == current_user.id)
         db_task = session.exec(statement).first()
@@ -55,7 +55,7 @@ def update_task(task_id: str, task_update: TaskUpdate, current_user=Depends(get_
         return db_task
 
 @router.delete("/tasks/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_task(task_id: str, current_user=Depends(get_current_user)):
+def delete_task(task_id: int, current_user=Depends(get_current_user)):
     with Session(sync_engine) as session:
         statement = select(Task).where(Task.id == task_id, Task.user_id == current_user.id)
         db_task = session.exec(statement).first()
@@ -67,7 +67,7 @@ def delete_task(task_id: str, current_user=Depends(get_current_user)):
         return
 
 @router.patch("/tasks/{task_id}/toggle", response_model=TaskRead)
-def toggle_task_completion(task_id: str, current_user=Depends(get_current_user)):
+def toggle_task_completion(task_id: int, current_user=Depends(get_current_user)):
     with Session(sync_engine) as session:
         statement = select(Task).where(Task.id == task_id, Task.user_id == current_user.id)
         db_task = session.exec(statement).first()

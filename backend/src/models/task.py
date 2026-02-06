@@ -1,7 +1,7 @@
 from sqlmodel import SQLModel, Field, Column, Relationship
 from typing import Optional
 from datetime import datetime
-import uuid
+from sqlalchemy import Integer
 
 class TaskBase(SQLModel):
     """
@@ -11,7 +11,7 @@ class TaskBase(SQLModel):
     description: Optional[str] = Field(default=None)
     priority: str = Field(default="medium", description="Priority level: 'low', 'medium', 'high'")
     due_date: Optional[datetime] = Field(default=None)
-    user_id: str = Field(foreign_key="user.id", nullable=False)  # Foreign key to User
+    user_id: int = Field(foreign_key="user.id", nullable=False)  # Foreign key to User
 
 
 class Task(TaskBase, table=True):
@@ -20,7 +20,7 @@ class Task(TaskBase, table=True):
     """
     __tablename__ = "tasks"
 
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
+    id: int = Field(default=None, primary_key=True, sa_column_kwargs={"autoincrement": True})
     is_completed: bool = Field(default=False)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
@@ -56,7 +56,8 @@ class TaskRead(TaskBase):
     """
     Model for reading task data.
     """
-    id: str
+    id: int
+    user_id: int
     is_completed: bool
     created_at: datetime
     updated_at: datetime
@@ -68,3 +69,11 @@ class TaskRead(TaskBase):
     category: Optional[str] = None
     ai_confidence_score: Optional[float] = None
     ai_reasoning: Optional[str] = None
+
+class TaskUpdate(SQLModel):
+    """
+    Model for updating task data.
+    """
+    title: Optional[str] = None
+    description: Optional[str] = None
+    completed: Optional[bool] = None

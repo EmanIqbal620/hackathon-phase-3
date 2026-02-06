@@ -34,8 +34,18 @@ def verify_token(token: str) -> UserRead:
                 detail="Could not validate credentials",
                 headers={"WWW-Authenticate": "Bearer"},
             )
+        # Convert string user_id to integer since our User model uses integer IDs
+        try:
+            user_id_int = int(user_id)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid user ID in token",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
         # Create a minimal user representation from the token
-        user = UserRead(id=user_id, email=payload.get("email", ""), name=payload.get("name", None))
+        user = UserRead(id=user_id_int, email=payload.get("email", ""), name=payload.get("name", None))
         return user
     except JWTError:
         raise HTTPException(

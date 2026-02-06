@@ -1,14 +1,14 @@
 from sqlmodel import SQLModel, Field, Relationship
 from typing import Optional
 from datetime import datetime
-import uuid
+from sqlalchemy import Integer
 
 # User Model
 class UserBase(SQLModel):
     email: str = Field(unique=True, nullable=False)
 
 class User(UserBase, table=True):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
+    id: int = Field(default=None, primary_key=True, sa_column_kwargs={"autoincrement": True})
     name: Optional[str] = Field(default=None)  # Optional name field
     password_hash: str = Field(nullable=False)
     is_active: bool = Field(default=True)
@@ -23,7 +23,7 @@ class UserCreate(UserBase):
     password: str
 
 class UserRead(UserBase):
-    id: str
+    id: int
     name: Optional[str]
 
 # Task Model
@@ -31,10 +31,10 @@ class TaskBase(SQLModel):
     title: str = Field(nullable=False)
     description: Optional[str] = Field(default=None)
     completed: bool = Field(default=False)
-    user_id: str = Field(foreign_key="user.id")
+    user_id: int = Field(foreign_key="user.id")
 
 class Task(TaskBase, table=True):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
+    id: int = Field(default=None, primary_key=True, sa_column_kwargs={"autoincrement": True})
 
     # Relationship to user
     user: Optional[User] = Relationship(back_populates="tasks")
@@ -45,7 +45,8 @@ class TaskCreate(TaskBase):
     pass
 
 class TaskRead(TaskBase):
-    id: str
+    id: int
+    user_id: int
     created_at: datetime
     updated_at: datetime
 

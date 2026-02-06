@@ -1,13 +1,13 @@
 from sqlmodel import SQLModel, Field, Relationship
 from typing import Optional, List
 from datetime import datetime
-import uuid
+from sqlalchemy import Integer
 
 class User(SQLModel, table=True):
     """
     User model representing a registered user in the system.
     """
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
+    id: int = Field(default=None, primary_key=True, sa_column_kwargs={"autoincrement": True})
     email: str = Field(unique=True, nullable=False, max_length=255)
     password_hash: str = Field(nullable=False)  # Store hashed passwords
     name: Optional[str] = Field(default=None, max_length=255)
@@ -24,5 +24,5 @@ class User(SQLModel, table=True):
 
     # Add property to get user_id for JWT
     @property
-    def user_id(self) -> str:
+    def user_id(self) -> int:
         return self.id
