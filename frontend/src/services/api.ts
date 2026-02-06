@@ -24,7 +24,13 @@ const api: AxiosInstance = axios.create({
 
     // Remove trailing slash if present to prevent double slashes
     const cleanBaseUrl = processedBaseUrl.endsWith('/') ? processedBaseUrl.slice(0, -1) : processedBaseUrl;
-    return `${cleanBaseUrl}/api`;
+    // For Docker setup, if the base URL is just "/api", use it as-is
+    // Otherwise, append /api to the base URL for normal deployments
+    if (cleanBaseUrl === '/api') {
+      return '/api';
+    } else {
+      return `${cleanBaseUrl}/api`;
+    }
   })(),
   timeout: 30000, // 30 seconds timeout (increased for deployed services)
   headers: {

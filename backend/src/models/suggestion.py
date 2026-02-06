@@ -10,7 +10,7 @@ import uuid
 
 class SuggestionBase(SQLModel):
     """Base class for Suggestion model"""
-    user_id: str = Field(..., description="ID of the user this suggestion is for")
+    user_id: int = Field(..., description="ID of the user this suggestion is for")
     suggested_task_title: str = Field(..., description="Title of the suggested task", max_length=255)
     suggested_task_description: Optional[str] = Field(None, description="Description of the suggested task")
     suggestion_type: str = Field(..., description="Type of suggestion: 'pattern_based', 'priority_based', 'deadline_based', 'contextual'")

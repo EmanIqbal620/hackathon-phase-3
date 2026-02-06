@@ -15,7 +15,7 @@ class TaskService:
     """
 
     @staticmethod
-    def get_user_tasks(session: Session, user_id: str) -> List[Task]:
+    def get_user_tasks(session: Session, user_id: int) -> List[Task]:
         """
         Get all tasks for a specific user.
 
@@ -32,7 +32,7 @@ class TaskService:
         return tasks
 
     @staticmethod
-    def get_task_by_id(session: Session, task_id: str, user_id: str) -> Optional[Task]:
+    def get_task_by_id(session: Session, task_id: int, user_id: int) -> Optional[Task]:
         """
         Get a specific task by ID for a specific user.
 
@@ -50,7 +50,7 @@ class TaskService:
         return task
 
     @staticmethod
-    def create_task(session: Session, title: str, description: Optional[str], user_id: str, priority: str = "medium") -> Task:
+    def create_task(session: Session, title: str, description: Optional[str], user_id: int, priority: str = "medium") -> Task:
         """
         Create a new task for a user.
 
@@ -79,8 +79,8 @@ class TaskService:
     @staticmethod
     def update_task(
         session: Session,
-        task_id: str,
-        user_id: str,
+        task_id: int,
+        user_id: int,
         title: Optional[str] = None,
         description: Optional[str] = None,
         priority: Optional[str] = None,

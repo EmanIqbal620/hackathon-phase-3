@@ -10,7 +10,7 @@ import uuid
 
 class UserInteractionBase(SQLModel):
     """Base class for UserInteraction model"""
-    user_id: str = Field(..., description="ID of the user performing the interaction")
+    user_id: int = Field(..., description="ID of the user performing the interaction")
     interaction_type: str = Field(..., description="Type of interaction: 'chat_message', 'suggestion_response', 'analytics_view', 'task_action'")
     input_content: str = Field(..., description="Content of the user's input")
     output_content: str = Field(..., description="Content of the system's output")

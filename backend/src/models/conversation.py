@@ -7,7 +7,7 @@ from typing import Dict, Any, Union, List
 
 # Conversation Model
 class ConversationBase(SQLModel):
-    user_id: str = Field(foreign_key="user.id", index=True)  # Foreign Key to User, required for isolation
+    user_id: int = Field(foreign_key="user.id", index=True)  # Foreign Key to User, required for isolation
     title: Optional[str] = Field(max_length=200, default=None)  # Optional, auto-generated from first message or user-edited
 
 
@@ -42,7 +42,7 @@ class ConversationRead(ConversationBase):
 
 # Message Model
 class MessageBase(SQLModel):
-    user_id: str = Field(foreign_key="user.id", index=True)  # Foreign Key to User, required for isolation
+    user_id: int = Field(foreign_key="user.id", index=True)  # Foreign Key to User, required for isolation
     conversation_id: int = Field(foreign_key="conversation.id", index=True)  # Foreign Key to Conversation, required
     role: str = Field(max_length=20)  # "user" or "assistant", required
     content: str = Field(max_length=10000)  # Message content, required

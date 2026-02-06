@@ -6,7 +6,7 @@ import uuid
 
 class ConversationBase(SQLModel):
     """Base class for conversation models."""
-    user_id: str = Field(index=True)
+    user_id: int = Field(index=True)
 
 
 class Conversation(ConversationBase, table=True):
@@ -24,7 +24,7 @@ class Conversation(ConversationBase, table=True):
 class MessageBase(SQLModel):
     """Base class for message models."""
     conversation_id: int = Field(foreign_key="conversations.id", index=True)
-    user_id: str = Field(index=True)
+    user_id: int = Field(index=True)
     role: str = Field(max_length=20)  # 'user' or 'assistant'
     content: str
 

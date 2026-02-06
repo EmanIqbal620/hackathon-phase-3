@@ -32,8 +32,13 @@ class ApiClient {
       baseUrl = `https://${baseUrl}`;
     }
 
-    // The backend routes include /api prefix, so we include it in the base URL
-    this.baseUrl = baseUrl.endsWith('/api') ? baseUrl : `${baseUrl}/api`;
+    // For Docker setup, if the base URL is just "/api", use it as-is
+    // Otherwise, append /api to the base URL for normal deployments
+    if (baseUrl === '/api') {
+      this.baseUrl = '/api';
+    } else {
+      this.baseUrl = baseUrl.endsWith('/api') ? baseUrl : `${baseUrl}/api`;
+    }
     this.defaultHeaders = {
       'Content-Type': 'application/json',
       ...config.defaultHeaders,

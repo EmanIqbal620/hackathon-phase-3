@@ -10,7 +10,7 @@ import uuid
 
 class ReminderBase(SQLModel):
     """Base class for Reminder model"""
-    user_id: str = Field(..., description="ID of the user this reminder is for")
+    user_id: int = Field(..., description="ID of the user this reminder is for")
     task_id: str = Field(..., description="ID of the task this reminder is for")
     scheduled_time: datetime = Field(..., sa_column=Column(DateTime(timezone=True)), description="When to send the reminder")
     delivery_method: str = Field(default="notification", description="Method to deliver: 'notification', 'email', 'sms'")

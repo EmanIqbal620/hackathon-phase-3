@@ -10,7 +10,7 @@ import uuid
 
 class PerformanceMetricsBase(SQLModel):
     """Base class for PerformanceMetrics model"""
-    user_id: str = Field(..., description="ID of the user this performance metric belongs to")
+    user_id: int = Field(..., description="ID of the user this performance metric belongs to")
     metric_type: str = Field(..., description="Type of metric: 'page_load', 'api_response', 'animation_frame', 'interaction_response'")
     value: float = Field(..., description="The measured value for this metric")
     unit: str = Field(..., description="Unit of measurement: 'milliseconds', 'seconds', 'frames_per_second', 'bytes'")

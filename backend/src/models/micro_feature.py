@@ -60,7 +60,7 @@ class MicroFeatureUpdate(SQLModel):
 
 class UserMicroFeaturePreferenceBase(SQLModel):
     """Base class for user micro feature preferences"""
-    user_id: str = Field(..., description="ID of the user")
+    user_id: int = Field(..., description="ID of the user")
     micro_feature_id: str = Field(..., description="ID of the micro feature")
     is_enabled: bool = Field(default=False, description="Whether the user has enabled this feature")
     custom_settings: Optional[Dict[str, Any]] = Field(default=None, sa_type=JSON, description="Custom settings for this feature")

@@ -10,7 +10,7 @@ import uuid
 
 class AccessibilitySettingsBase(SQLModel):
     """Base class for AccessibilitySettings model"""
-    user_id: str = Field(..., description="ID of the user this accessibility settings belongs to")
+    user_id: int = Field(..., description="ID of the user this accessibility settings belongs to")
     high_contrast_enabled: bool = Field(default=False, description="Whether high contrast mode is enabled")
     reduced_motion_enabled: bool = Field(default=False, description="Whether reduced motion is enabled")
     screen_reader_optimized: bool = Field(default=True, description="Whether UI is optimized for screen readers")

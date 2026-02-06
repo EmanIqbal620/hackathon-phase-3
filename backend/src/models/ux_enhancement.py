@@ -12,7 +12,7 @@ import uuid
 
 class UXEnhancementBase(SQLModel):
     """Base class for UXEnhancement model"""
-    user_id: str = Field(..., description="ID of the user this UX enhancement tracking belongs to")
+    user_id: int = Field(..., description="ID of the user this UX enhancement tracking belongs to")
     enhancement_type: str = Field(..., description="Type of UX enhancement: 'animation', 'micro_interaction', 'theme_transition', 'suggestion_interaction', 'feature_discovery'")
     feature_name: str = Field(..., description="Name of the feature/enhancement", max_length=100)
     usage_count: int = Field(default=0, description="Number of times the user interacted with this enhancement")

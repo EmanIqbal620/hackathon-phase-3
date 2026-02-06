@@ -10,7 +10,7 @@ import uuid
 
 class AnalyticsDataBase(SQLModel):
     """Base class for AnalyticsData model"""
-    user_id: str = Field(..., description="ID of the user this analytics data belongs to")
+    user_id: int = Field(..., description="ID of the user this analytics data belongs to")
     metric_type: str = Field(..., description="Type of metric: 'daily', 'weekly', 'monthly', 'quarterly', 'yearly'")
     date_range_start: datetime = Field(..., description="Start date for the analytics period")
     date_range_end: datetime = Field(..., description="End date for the analytics period")

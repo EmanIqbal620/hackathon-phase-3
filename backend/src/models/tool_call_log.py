@@ -9,7 +9,7 @@ class ToolCallLog(SQLModel, table=True):
     Record of AI agent's tool invocations with status and results for transparency
     """
     id: Optional[int] = Field(default=None, primary_key=True)
-    user_id: str = Field(index=True)  # Foreign Key to User, required for isolation
+    user_id: int = Field(index=True)  # Foreign Key to User, required for isolation
     conversation_id: int = Field(index=True)  # Foreign Key to Conversation, required
     message_id: Optional[int] = Field(default=None, index=True)  # Foreign Key to Message that triggered the tool call
     tool_name: str = Field(max_length=100)  # Name of the tool called, required

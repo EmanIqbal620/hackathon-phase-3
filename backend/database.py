@@ -1,7 +1,8 @@
 from sqlmodel import create_engine, SQLModel
 from sqlalchemy.pool import QueuePool
 import os
-from backend.src.models import User, Task, Conversation, Message  # Import models
+# Import all models to ensure they're registered with SQLModel's metadata
+from backend.src import models
 
 # Get database URL from environment
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://username:password@localhost:5432/todoapp")
