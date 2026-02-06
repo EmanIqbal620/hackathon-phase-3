@@ -22,7 +22,37 @@ The authentication system consists of:
 
 ## Getting Started
 
-### Backend Setup
+### Option 1: Docker Setup (Recommended)
+
+#### Prerequisites
+- Docker installed and running
+
+#### Build and Run
+1. Build the backend image:
+   ```bash
+   cd backend
+   docker build -t todo-backend .
+   ```
+
+2. Build the frontend image:
+   ```bash
+   cd frontend
+   docker build -t todo-frontend .
+   ```
+
+3. Run the backend container:
+   ```bash
+   docker run --env-file .env -p 7860:7860 todo-backend
+   ```
+
+4. Run the frontend container:
+   ```bash
+   docker run -p 3000:7860 todo-frontend
+   ```
+
+### Option 2: Local Setup
+
+#### Backend Setup
 
 1. Navigate to the backend directory:
    ```bash
@@ -55,7 +85,7 @@ The authentication system consists of:
    start.bat
    ```
 
-### Frontend Setup
+#### Frontend Setup
 
 1. Navigate to the frontend directory:
    ```bash
@@ -170,3 +200,7 @@ The authentication system implements the following security principles:
 5. **Environment-Based Secrets**: JWT secret stored in environment variables only
 6. **Password Security**: Passwords are hashed using bcrypt before storage
 7. **Database Security**: SQL injection protection through ORM
+
+## Docker Build Instructions
+
+For detailed Docker build instructions, see [DOCKER_BUILD_GUIDE.md](DOCKER_BUILD_GUIDE.md).
