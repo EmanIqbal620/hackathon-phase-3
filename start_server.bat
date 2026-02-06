@@ -1,27 +1,11 @@
 @echo off
-echo ================================================
-echo Starting Todo App Backend with OpenRouter Config
-echo ================================================
+setlocal
 
-echo Stopping any existing backend processes...
-taskkill /f /im uvicorn.exe 2>nul
+echo Starting Todo App containers...
 
 echo.
-echo Starting backend server...
-cd backend
-echo Server starting on http://localhost:8000
-echo.
-echo NOTE: This may take a moment to initialize...
-echo.
-
-uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
-
-if errorlevel 1 (
-    echo.
-    echo ERROR: Server failed to start!
-    echo Please check:
-    echo 1. Python and required packages are installed
-    echo 2. Port 8000 is available
-    echo 3. All dependencies are properly installed
-    pause
-)
+echo To run the containers individually, use the commands in the README.
+echo Example:
+echo docker run -d -p 5432:5432 --name todo-db postgres:15
+echo docker run -d -p 7860:7860 --name todo-backend --link todo-db -e DATABASE_URL=postgresql://postgres:password@todo-db:5432/todoapp todo-backend
+echo docker run -d -p 3000:7860 --name todo-frontend --link todo-backend -e NEXT_PUBLIC_API_URL=http://localhost:7860 todo-frontend

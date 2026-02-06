@@ -1,114 +1,89 @@
-# CORS Configuration Guide for Full-Stack Application
+# CORS Configuration Guide
 
-This guide explains how to configure CORS for both local development and production deployment.
+This guide explains how to configure Cross-Origin Resource Sharing (CORS) for the Todo App backend.
 
-## Problem
-When deploying the frontend on Vercel, the browser shows CORS errors:
-- Request URL: http://localhost:8000/api/auth/register
-- Request Method: OPTIONS
-- Status Code: 400 Bad Request
+## Overview
 
-This occurs because the frontend (now on a different origin) makes a preflight OPTIONS request to the backend, which rejects it due to CORS policy.
+CORS (Cross-Origin Resource Sharing) is a security feature that controls how web pages in one domain can request resources from another domain. Our backend API implements CORS to securely allow requests from trusted origins while preventing unauthorized cross-origin requests.
 
-## Solution
+## Current Configuration
 
-### 1. Backend (FastAPI) Configuration
+The backend API is configured with the following CORS settings:
 
-The backend now supports dynamic CORS configuration using environment variables:
+```python
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+```
 
-#### Environment Variables:
-- `CORS_ORIGINS`: Comma-separated list of allowed origins
-- `VERCEL_URL`: Automatically set by Vercel during deployment (used to dynamically add the Vercel URL to allowed origins)
-- `PRODUCTION_FRONTEND_URL`: Custom domain for production (optional)
+### Allowed Origins
 
-#### Current Allowed Origins:
+The application supports the following origins:
+
 - `http://localhost:3000` - Local frontend development
-- `https://emaniqbal-todo-phase2.hf.space` - Hugging Face deployment
-- `http://localhost:8000` - Local backend testing
-- Dynamic origins from environment variables
+- `https://emaniqbal-todo-phase2.hf.space` - Deployed frontend on Hugging Face
+- `http://localhost:8000` - Local backend (for testing)
+- `http://127.0.0.1:3000`
+- `http://127.0.0.1:8000`
+- `http://localhost:3001`
+- `http://localhost:3002`
+- `http://127.0.0.1:3001`
+- `http://127.0.0.1:3002`
+- `http://localhost`
+- `http://127.0.0.1`
 
-### 2. Frontend (Next.js) Configuration
+Additionally, the following dynamic origins are supported:
 
-#### Environment Variables:
-- `NEXT_PUBLIC_API_URL`: The backend URL used by the frontend
+- Vercel deployment URLs (when `VERCEL_URL` environment variable is set)
+- Custom production frontend URL (when `PRODUCTION_FRONTEND_URL` environment variable is set)
+- Origins specified in the `CORS_ORIGINS` environment variable (comma-separated list)
 
-#### For Different Environments:
+## Environment Variables
 
-**Local Development:**
-```
-NEXT_PUBLIC_API_URL=http://localhost:8000
-```
+The CORS configuration can be customized using the following environment variables:
 
-**Vercel Production:**
-```
-NEXT_PUBLIC_API_URL=https://your-vercel-project-name.vercel.app
-```
+- `CORS_ORIGINS`: Comma-separated list of additional origins to allow
+- `VERCEL_URL`: URL of the Vercel deployment (automatically added to allowed origins)
+- `PRODUCTION_FRONTEND_URL`: Custom production frontend URL
 
-**Hugging Face Spaces:**
-```
-NEXT_PUBLIC_API_URL=https://emaniqbal-todo-phase2.hf.space
-```
+## Docker Configuration
 
-## Setup Instructions
+When running the application with Docker, CORS is automatically configured based on the environment variables. The frontend and backend services are configured to communicate properly within the Docker network.
 
-### For Local Development:
-1. Ensure your backend is running on `http://localhost:8000`
-2. Set in frontend `.env.local`:
-   ```
-   NEXT_PUBLIC_API_URL=http://localhost:8000
-   ```
-3. Start both frontend and backend normally
+For Docker deployments, the frontend service is configured with:
+- `NEXT_PUBLIC_API_URL=http://backend:7860`
 
-### For Vercel Deployment:
-
-#### Option 1: Using Vercel CLI
-1. Install Vercel CLI: `npm i -g vercel`
-2. Navigate to the frontend directory: `cd frontend`
-3. Run `vercel env add NEXT_PUBLIC_API_URL` and set it to your backend URL
-4. Deploy: `vercel --prod`
-
-#### Option 2: Using Vercel Dashboard
-1. Go to your Vercel dashboard
-2. Select your project
-3. Go to Settings → Environment Variables
-4. Add:
-   - Key: `NEXT_PUBLIC_API_URL`
-   - Value: Your backend URL (e.g., `https://your-backend.onrender.com` or your Hugging Face Space URL)
-5. Redeploy your project
-
-### For Backend Deployment:
-
-#### If deploying backend to a custom server:
-1. Set the `PRODUCTION_FRONTEND_URL` environment variable to your Vercel frontend URL
-2. If deploying to Vercel, the `VERCEL_URL` will be set automatically
-
-#### If using Hugging Face Spaces (current setup):
-The CORS configuration already includes the Hugging Face Space URL.
-
-## Troubleshooting
-
-### Common Issues:
-
-1. **Preflight OPTIONS 400 Error**
-   - Ensure your backend allows the Vercel domain
-   - Check that the origin in the request matches what's configured
-
-2. **Credentials Not Working**
-   - Make sure `allow_credentials=True` is set in CORS middleware
-   - Verify that both frontend and backend use the same protocol (HTTP/HTTPS)
-
-3. **Environment Variables Not Loading**
-   - For frontend: Ensure variables are prefixed with `NEXT_PUBLIC_`
-   - For backend: Check that environment variables are set in the deployment environment
-
-### Testing CORS Configuration:
-1. Use browser dev tools Network tab to inspect OPTIONS requests
-2. Check the "Access-Control-Allow-Origin" header in responses
-3. Verify the request origin matches an allowed origin
+This allows the frontend to communicate with the backend service using the internal Docker network name.
 
 ## Security Considerations
 
-- Never use `"*"` for `allow_origins` in production
-- Only add trusted domains to allowed origins
-- Regularly review and remove unused origins from configuration
-- Use HTTPS in production environments
+- The configuration allows credentials to be sent with cross-origin requests (`allow_credentials=True`)
+- All HTTP methods and headers are permitted (`allow_methods=["*"]`, `allow_headers=["*"]`)
+- Origins are restricted to known, trusted domains
+- Dynamic origins from environment variables should be carefully validated in production
+
+## Troubleshooting
+
+### Common CORS Issues
+
+1. **"Access to fetch from origin has been blocked"**: Check that the requesting origin is in the allowed list
+2. **Credentials not being sent**: Ensure the origin is properly configured and credentials are enabled
+3. **Development vs Production differences**: Verify that the correct origins are configured for each environment
+
+### Testing CORS Configuration
+
+To test CORS configuration during development:
+1. Ensure your frontend is running on one of the allowed origins
+2. Check browser developer tools for CORS-related errors
+3. Verify that the `Origin` header in requests matches an allowed origin
+
+## Best Practices
+
+- Regularly audit the list of allowed origins
+- Use environment-specific configurations
+- Monitor for unexpected CORS errors in production
+- Consider using more restrictive method/header allowances if security requirements demand it

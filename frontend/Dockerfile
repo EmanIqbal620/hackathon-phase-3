@@ -1,3 +1,4 @@
+# Build stage
 FROM node:18-alpine AS builder
 
 WORKDIR /app
@@ -20,9 +21,11 @@ FROM nginx:alpine
 # Copy the build output to nginx html directory
 COPY --from=builder /app/out /usr/share/nginx/html
 
-# Copy custom nginx configuration (optional)
+# Copy custom nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf
 
+# Expose the port that nginx is listening on
 EXPOSE 7860
 
+# Start nginx server
 CMD ["nginx", "-g", "daemon off;"]
