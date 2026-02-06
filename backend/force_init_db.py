@@ -1,5 +1,5 @@
 from sqlmodel import SQLModel, create_engine
-from models import User, Task  # your SQLModel classes
+from src.models import User, Task  # your SQLModel classes
 from dotenv import load_dotenv
 import os
 

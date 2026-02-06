@@ -3,7 +3,7 @@ from sqlmodel import select, Session, desc
 from typing import List
 from datetime import datetime
 
-from models import Task, TaskCreate, TaskRead, TaskUpdate
+from src.models import Task, TaskCreate, TaskRead, TaskUpdate
 from dependencies import get_current_user
 from database import sync_engine
 

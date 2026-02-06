@@ -6,8 +6,8 @@ from datetime import datetime
 
 from ...dependencies.auth import get_current_user
 from ...database import get_session
-from ...models.task import Task
-from ...models.user import User
+from ...src.models.task import Task
+from ...src.models.user import User
 from ...exceptions.auth import InsufficientPermissionsException
 from ...services.task_service import TaskService
 

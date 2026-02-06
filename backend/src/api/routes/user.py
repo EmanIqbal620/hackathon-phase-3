@@ -6,7 +6,7 @@ from ...dependencies.auth import get_current_user, get_current_user_identity
 from ...exceptions.auth import InsufficientPermissionsException
 from ...config import config
 from ...database import get_session
-from ...models.user import User
+from ...src.models.user import User
 
 router = APIRouter(prefix="/user", tags=["User"])
 

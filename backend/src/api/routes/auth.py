@@ -12,7 +12,7 @@ from ...dependencies.auth import create_access_token, create_refresh_token, get_
 from ...exceptions.auth import InvalidCredentialsException, DuplicateUserException
 from ...config import config
 from ...database import get_session
-from ...models.user import User
+from ...src.models.user import User
 
 # Set up logging for authentication operations
 logger = logging.getLogger(__name__)

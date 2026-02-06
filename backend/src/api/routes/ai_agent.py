@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from typing import Optional
 from ...middleware.auth import get_current_user
-from ...models.user import User
+from ...src.models.user import User
 from ...services.ai_agent_service import AIAgentService
 from ...database import sync_engine
 from sqlmodel import Session

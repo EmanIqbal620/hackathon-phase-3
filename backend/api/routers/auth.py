@@ -7,7 +7,7 @@ from jose import jwt
 from dotenv import load_dotenv
 import os
 
-from models import User, UserCreate, UserRead
+from src.models import User, UserCreate, UserRead
 from database import sync_engine
 
 load_dotenv()

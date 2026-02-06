@@ -1,6 +1,6 @@
 import asyncio
 from sqlmodel import SQLModel, create_engine, text
-from models import User, Task
+from src.models import User, Task
 import os
 from dotenv import load_dotenv
 

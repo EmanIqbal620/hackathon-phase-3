@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 import os
 from typing import Optional
 
-from models import UserRead
+from src.models import UserRead
 
 # Get JWT configuration from environment
 SECRET_KEY = os.getenv("JWT_SECRET", "your-secret-key-change-in-production")

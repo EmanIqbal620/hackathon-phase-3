@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 from typing import List, Dict, Optional
 from ...dependencies.auth import get_current_user, TokenData
 from ...agents.chat_agent import ChatRequest, process_chat_request
-from ...models import Message, MessageCreate, Conversation, ConversationCreate
+from ...src.models import Message, MessageCreate, Conversation, ConversationCreate
 from ...database import sync_engine
 from sqlmodel import Session, select
 from datetime import datetime

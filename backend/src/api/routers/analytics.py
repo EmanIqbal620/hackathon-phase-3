@@ -8,7 +8,7 @@ from typing import List, Dict, Optional
 from datetime import datetime
 from ...dependencies.auth import get_current_user, TokenData
 from ...services.analytics_service import AnalyticsService
-from ...models import Task
+from ...src.models import Task
 from ...database import sync_engine
 from sqlmodel import Session, select
 import time

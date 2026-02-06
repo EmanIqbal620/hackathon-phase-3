@@ -2,7 +2,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
-from ...models.conversation import Message, MessageCreate, Conversation
+from ...src.models.conversation import Message, MessageCreate, Conversation
 from ...services.conversation_service import ConversationService
 from ...agents.chat_agent import process_chat_request, ChatRequest as AgentChatRequest
 from ...middleware.auth import get_current_user, TokenData
