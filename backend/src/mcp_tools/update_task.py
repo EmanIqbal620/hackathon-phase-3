@@ -7,8 +7,8 @@ from typing import List, Optional
 from mcp.types import TextContent
 import logging
 from sqlmodel import Session, select
-from ..models import Task
-from ...database import sync_engine
+from ..models.task import Task
+from ..database import sync_engine
 
 
 # Set up logging
@@ -51,7 +51,11 @@ def update_task(params: UpdateTaskParams) -> List[TextContent]:
             if params.description is not None:
                 task.description = params.description
             if params.completed is not None:
-                task.completed = params.completed
+                task.is_completed = params.completed
+
+            # Update the updated_at timestamp
+            from datetime import datetime
+            task.updated_at = datetime.utcnow()
 
             # Commit the changes
             session.add(task)
@@ -66,7 +70,7 @@ def update_task(params: UpdateTaskParams) -> List[TextContent]:
                     "id": task.id,
                     "title": task.title,
                     "description": task.description,
-                    "completed": task.completed,
+                    "completed": task.is_completed,
                     "updated_at": task.updated_at.isoformat()
                 }
             }
@@ -102,4 +106,4 @@ def mock_update_task(params: UpdateTaskParams) -> List[TextContent]:
         }
     }
 
-    return [TextContent(type="text", text=str(response))]
+    return [TextContent(text=str(response))]

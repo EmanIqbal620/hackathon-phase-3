@@ -1,4 +1,5 @@
 from sqlmodel import SQLModel, Field
+from sqlalchemy import JSON
 from datetime import datetime
 from typing import Optional, Dict, Any
 import uuid
@@ -12,9 +13,9 @@ class ToolCallLog(SQLModel, table=True):
     conversation_id: int = Field(index=True)  # Foreign Key to Conversation, required
     message_id: Optional[int] = Field(default=None, index=True)  # Foreign Key to Message that triggered the tool call
     tool_name: str = Field(max_length=100)  # Name of the tool called, required
-    parameters: Dict[str, Any] = Field(default={})  # Parameters passed to the tool, required
-    result: Optional[Dict[str, Any]] = Field(default=None)  # Result from the tool call, optional
-    status: str = Field(sa_column_kwargs={"default": "pending"})  # Enum: "success"|"error"|"pending", required
+    parameters: Dict[str, Any] = Field(default={}, sa_type=JSON)  # Parameters passed to the tool, required
+    result: Optional[Dict[str, Any]] = Field(default=None, sa_type=JSON)  # Result from the tool call, optional
+    status: str = Field(default="pending", max_length=20)  # Enum: "success"|"error"|"pending", required
     timestamp: datetime = Field(default_factory=datetime.utcnow)  # When tool was called, required
 
     def __init__(self, **kwargs):

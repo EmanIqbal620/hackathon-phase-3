@@ -1,6 +1,6 @@
 from sqlmodel import Session, select
 from sqlalchemy import case
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from ..models.conversation import Conversation, Message, MessageCreate
 from ..models.tool_call_log import ToolCallLog
 from datetime import datetime, timedelta

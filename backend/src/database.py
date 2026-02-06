@@ -1,6 +1,7 @@
 from sqlmodel import SQLModel, create_engine, Session
 from sqlalchemy.pool import QueuePool, NullPool
 from .models import Task, User
+from .models.conversation import Conversation, Message
 from .models.performance import PerformanceMetrics
 from .models.accessibility import AccessibilitySettings
 from .models.ux_enhancement import UXEnhancement

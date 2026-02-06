@@ -7,8 +7,8 @@ from typing import List
 from mcp.types import TextContent
 import logging
 from sqlmodel import Session, select, delete
-from ..models import Task
-from ...database import sync_engine
+from ..models.task import Task
+from ..database import sync_engine
 
 
 # Set up logging
@@ -42,9 +42,16 @@ def delete_task(params: DeleteTaskParams) -> List[TextContent]:
                 }
                 return [TextContent(type="text", text=str(error_response))]
 
-            # Delete the task
-            session.delete(task)
+            # Perform soft delete by setting deleted_at timestamp
+            from datetime import datetime
+            task.deleted_at = datetime.utcnow()
+
+            # Update the updated_at timestamp
+            task.updated_at = datetime.utcnow()
+
+            session.add(task)
             session.commit()
+            session.refresh(task)
 
             # Prepare success response
             response = {
@@ -76,4 +83,4 @@ def mock_delete_task(params: DeleteTaskParams) -> List[TextContent]:
         "message": f"Task '{params.task_id}' deleted successfully"
     }
 
-    return [TextContent(type="text", text=str(response))]
+    return [TextContent(text=str(response))]

@@ -16,7 +16,11 @@ class User(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
     # Relationship to conversations
-    conversations: List["Conversation"] = Relationship(back_populates="user")
+    conversations: List["Conversation"] = Relationship(back_populates="user", sa_relationship_kwargs={"primaryjoin": "User.id==Conversation.user_id"})
+
+    # Relationship to tasks
+    tasks: List["Task"] = Relationship(back_populates="user", sa_relationship_kwargs={"primaryjoin": "User.id==Task.user_id"})
+
 
     # Add property to get user_id for JWT
     @property

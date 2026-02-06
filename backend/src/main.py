@@ -3,8 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import SQLModel
 
 # Import routers
-from .api.routes import auth, user, tasks
-from .api.routers import chat, analytics
+from .api.routes import auth, user, tasks, chat
+from .api.routers import analytics
 
 app = FastAPI(
     title="Todo App API",
@@ -21,6 +21,8 @@ app.add_middleware(
         "http://localhost:8000",  # Local backend (for testing)
         "http://127.0.0.1:3000",
         "http://127.0.0.1:8000",
+        "http://localhost:3005",  # Additional frontend port
+        "http://127.0.0.1:3005",  # Additional frontend port
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -48,9 +50,8 @@ PUBLIC_ROUTES = {
 def create_db_and_tables():
     """Create database tables safely."""
     try:
-        from .database import get_engine
-        engine = get_engine()
-        SQLModel.metadata.create_all(engine)
+        from .database import sync_engine
+        SQLModel.metadata.create_all(sync_engine)
         print("+ Database tables created successfully")
     except Exception as e:
         print(f"! Could not connect to database: {e}")

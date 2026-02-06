@@ -22,16 +22,19 @@ from pydantic import BaseModel
 class TaskCreateRequest(BaseModel):
     title: str
     description: Optional[str] = None
+    priority: Optional[str] = "medium"
 
 class TaskUpdateRequest(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
+    priority: Optional[str] = None
     is_completed: Optional[bool] = None
 
 class TaskResponse(BaseModel):
     id: str
     title: str
     description: Optional[str] = None
+    priority: str = "medium"
     is_completed: bool
     user_id: str
     created_at: datetime
@@ -61,6 +64,7 @@ def get_user_tasks(
             id=task.id,
             title=task.title,
             description=task.description,
+            priority=task.priority,
             is_completed=task.is_completed,
             user_id=task.user_id,
             created_at=task.created_at,
@@ -90,7 +94,8 @@ def create_task(
         session,
         task_request.title,
         task_request.description,
-        current_user.user_id
+        current_user.user_id,
+        priority=task_request.priority
     )
 
     logger.info(f"Task {task.id} created successfully for user {current_user.user_id}")
@@ -98,6 +103,7 @@ def create_task(
         id=task.id,
         title=task.title,
         description=task.description,
+        priority=task.priority,
         is_completed=task.is_completed,
         user_id=task.user_id,
         created_at=task.created_at,
@@ -132,6 +138,7 @@ def get_task(
         id=task.id,
         title=task.title,
         description=task.description,
+        priority=task.priority,
         is_completed=task.is_completed,
         user_id=task.user_id,
         created_at=task.created_at,
@@ -159,6 +166,7 @@ def update_task(
         current_user.user_id,
         title=task_request.title,
         description=task_request.description,
+        priority=task_request.priority,
         is_completed=task_request.is_completed
     )
 
@@ -174,6 +182,7 @@ def update_task(
         id=updated_task.id,
         title=updated_task.title,
         description=updated_task.description,
+        priority=updated_task.priority,
         is_completed=updated_task.is_completed,
         user_id=updated_task.user_id,
         created_at=updated_task.created_at,
@@ -234,6 +243,7 @@ def toggle_task_completion(
         id=updated_task.id,
         title=updated_task.title,
         description=updated_task.description,
+        priority=updated_task.priority,
         is_completed=updated_task.is_completed,
         user_id=updated_task.user_id,
         created_at=updated_task.created_at,

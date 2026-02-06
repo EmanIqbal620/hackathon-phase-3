@@ -8,8 +8,8 @@ from mcp.types import TextContent
 import logging
 from sqlmodel import Session, select, func
 from datetime import datetime, timedelta
-from ..models import Task
-from ...database import sync_engine
+from ..models.task import Task
+from ..database import sync_engine
 
 
 # Set up logging

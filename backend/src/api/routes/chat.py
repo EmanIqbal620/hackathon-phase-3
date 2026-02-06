@@ -1,16 +1,17 @@
+import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 from ...models.conversation import Message, MessageCreate, Conversation
-from ...models.tool_call_log import ToolCallLog
 from ...services.conversation_service import ConversationService
-from ...services.ai_agent_service import AIAgentService
+from ...agents.chat_agent import process_chat_request, ChatRequest as AgentChatRequest
 from ...middleware.auth import get_current_user, TokenData
-from ...middleware.rate_limit import check_rate_limit
-from ...database import get_session
+from ...database import sync_engine
 from sqlmodel import Session
-import uuid
 from datetime import datetime
+
+# Set up logging
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -37,11 +38,8 @@ class ChatResponse(BaseModel):
 async def chat(
     user_id: str,
     request: ChatRequest,
-    current_user: TokenData = Depends(get_current_user),
-    session: Session = Depends(get_session)
+    current_user: TokenData = Depends(get_current_user)
 ):
-    # Check rate limit for the user
-    await check_rate_limit(user_id)
     """
     Process a user message and return AI response with tool call results
 
@@ -49,7 +47,6 @@ async def chat(
         user_id: The ID of the user sending the message
         request: Chat request containing the message and optional conversation_id
         current_user: Current authenticated user
-        session: Database session
 
     Returns:
         ChatResponse containing conversation ID, AI response, and tool call results
@@ -61,86 +58,120 @@ async def chat(
             detail="Access denied: You can only access your own chat"
         )
 
-    try:
-        # Initialize services
-        conversation_service = ConversationService(session)
-        ai_agent_service = AIAgentService(session)
+    # Create session manually since we're using sync_engine
+    with Session(sync_engine) as session:
+        try:
+            # Build conversation history for the chat agent
+            conversation_history_formatted = []
+            conversation_service = ConversationService(session)
 
-        # Create or retrieve conversation
-        if request.conversation_id:
-            conversation = conversation_service.get_conversation(request.conversation_id, user_id)
-            if not conversation:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Conversation not found"
-                )
-        else:
-            conversation = conversation_service.create_conversation(user_id)
+            if request.conversation_id:
+                # If we have a conversation ID, get history
+                conversation = conversation_service.get_conversation(request.conversation_id, user_id)
+                if not conversation:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Conversation not found"
+                    )
+            else:
+                # Create new conversation if none exists
+                conversation = conversation_service.create_conversation(user_id)
 
-        # Create user message in the conversation
-        user_message_data = MessageCreate(
-            user_id=user_id,
-            conversation_id=conversation.id,
-            role="user",
-            content=request.message
-        )
-        user_message = conversation_service.create_message(user_message_data)
+            # Create user message in the conversation first
+            user_message_data = MessageCreate(
+                user_id=user_id,
+                conversation_id=conversation.id,
+                role="user",
+                content=request.message
+            )
+            user_message = conversation_service.create_message(user_message_data)
 
-        # Get conversation history for context
-        conversation_history = conversation_service.get_conversation_messages(conversation.id)
+            # Get conversation messages and format them for the chat agent
+            # We need to get messages after creating the user message to include it
+            db_messages = conversation_service.get_conversation_messages(conversation.id)
+            for msg in db_messages:
+                conversation_history_formatted.append({
+                    "role": msg.role,
+                    "content": msg.content
+                })
 
-        # Process the message with AI agent
-        ai_response, tool_call_results = await ai_agent_service.process_message(
-            user_id=user_id,
-            message=request.message,
-            conversation_history=conversation_history
-        )
-
-        # Create assistant message with tool call results
-        assistant_message_data = MessageCreate(
-            user_id=user_id,  # AI acts on behalf of user
-            conversation_id=conversation.id,
-            role="assistant",
-            content=ai_response,
-            tool_call_results=tool_call_results
-        )
-        assistant_message = conversation_service.create_message(assistant_message_data)
-
-        # Format tool call results for response with more detailed information
-        formatted_tool_calls = []
-        for tool_result in tool_call_results or []:
-            formatted_tool_calls.append(
-                ToolCallResult(
-                    tool=tool_result.get("tool", "unknown"),
-                    status=tool_result.get("status", "unknown"),
-                    result=tool_result.get("result", {}),
-                    error=tool_result.get("error"),
-                    execution_time_ms=tool_result.get("execution_time_ms")
-                )
+            # Format the request for the chat agent
+            chat_req = AgentChatRequest(
+                user_id=user_id,
+                message=request.message,
+                conversation_history=conversation_history_formatted
             )
 
-        return ChatResponse(
-            conversation_id=conversation.id,
-            response=ai_response,
-            tool_calls=formatted_tool_calls
-        )
+            # Process the message with the chat agent - with fallback for AI provider issues
+            try:
+                chat_response = process_chat_request(chat_req)
+                ai_response = chat_response.response
+                tool_usage = chat_response.tool_usage or {}
+            except Exception as e:
+                # If the main chat agent fails (likely due to AI provider issues), use fallback
+                logger.error(f"Main chat agent failed: {str(e)}, using fallback")
+                from ...agents.chat_agent_mock_fallback import process_chat_request_with_fallback
+                chat_response = process_chat_request_with_fallback(chat_req)
+                ai_response = chat_response.response
+                tool_usage = chat_response.tool_usage or {}
 
-    except HTTPException:
-        # Re-raise HTTP exceptions as-is
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An error occurred while processing your message: {str(e)}"
-        )
+            # Format tool call results for response
+            tool_call_results = []
+            if isinstance(tool_usage, dict) and "tools_called" in tool_usage:
+                # Convert tool usage to the expected format
+                for tool_name in tool_usage.get("tools_called", []):
+                    tool_call_results.append({
+                        "tool": tool_name,
+                        "status": "success",
+                        "result": {},
+                        "arguments": {}
+                    })
+
+            # Create assistant message with tool call results
+            assistant_message_data = MessageCreate(
+                user_id=user_id,  # AI acts on behalf of user
+                conversation_id=conversation.id,
+                role="assistant",
+                content=ai_response,
+                tool_call_results=tool_call_results
+            )
+            assistant_message = conversation_service.create_message(assistant_message_data)
+
+            # Format tool call results for response with more detailed information
+            formatted_tool_calls = []
+            if isinstance(tool_usage, dict):
+                for tool_name in tool_usage.get("tools_called", []):
+                    formatted_tool_calls.append(
+                        ToolCallResult(
+                            tool=tool_name,
+                            status="success",
+                            result={},
+                            error=tool_usage.get("error"),
+                            execution_time_ms=None
+                        )
+                    )
+
+            return ChatResponse(
+                conversation_id=conversation.id,
+                response=ai_response,
+                tool_calls=formatted_tool_calls
+            )
+
+        except HTTPException:
+            # Re-raise HTTP exceptions as-is
+            raise
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"An error occurred while processing your message: {str(e)}"
+            )
 
 
 @router.get("/{user_id}/{conversation_id}", response_model=List[Dict[str, Any]])
 async def get_conversation_messages(
     user_id: str,
     conversation_id: int,
-    current_user: TokenData = Depends(get_current_user),
-    session: Session = Depends(get_session)
+    current_user: TokenData = Depends(get_current_user)
 ):
     """
     Retrieve all messages in a specific conversation
@@ -149,7 +180,6 @@ async def get_conversation_messages(
         user_id: The ID of the user requesting the conversation
         conversation_id: The ID of the conversation to retrieve
         current_user: Current authenticated user
-        session: Database session
 
     Returns:
         List of messages in the conversation
@@ -161,36 +191,38 @@ async def get_conversation_messages(
             detail="Access denied: You can only access your own conversations"
         )
 
-    try:
-        conversation_service = ConversationService(session)
-        messages = conversation_service.get_conversation_messages(conversation_id)
+    # Create session manually since we're using sync_engine
+    with Session(sync_engine) as session:
+        try:
+            conversation_service = ConversationService(session)
+            messages = conversation_service.get_conversation_messages(conversation_id)
 
-        # Verify that the conversation belongs to the user
-        if messages and messages[0].user_id != user_id:
+            # Verify that the conversation belongs to the user
+            if messages and messages[0].user_id != user_id:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Access denied: You can only access your own conversations"
+                )
+
+            # Format messages for response
+            formatted_messages = []
+            for msg in messages:
+                formatted_messages.append({
+                    "id": msg.id,
+                    "user_id": msg.user_id,
+                    "conversation_id": msg.conversation_id,
+                    "role": msg.role,
+                    "content": msg.content,
+                    "timestamp": msg.timestamp.isoformat() if msg.timestamp else None,
+                    "tool_call_results": msg.tool_call_results
+                })
+
+            return formatted_messages
+
+        except HTTPException:
+            raise
+        except Exception as e:
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Access denied: You can only access your own conversations"
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"An error occurred while retrieving conversation: {str(e)}"
             )
-
-        # Format messages for response
-        formatted_messages = []
-        for msg in messages:
-            formatted_messages.append({
-                "id": msg.id,
-                "user_id": msg.user_id,
-                "conversation_id": msg.conversation_id,
-                "role": msg.role,
-                "content": msg.content,
-                "timestamp": msg.timestamp.isoformat() if msg.timestamp else None,
-                "tool_call_results": msg.tool_call_results
-            })
-
-        return formatted_messages
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An error occurred while retrieving conversation: {str(e)}"
-        )

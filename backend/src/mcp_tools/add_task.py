@@ -8,7 +8,7 @@ from mcp.types import TextContent
 import logging
 from sqlmodel import Session, select
 from ..models import Task, TaskCreate
-from ...database import sync_engine
+from ..database import sync_engine
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -30,11 +30,14 @@ def add_task(params: AddTaskParams) -> List[TextContent]:
         # Create a new task using SQLModel
         with Session(sync_engine) as session:
             # Create the task object
+            from datetime import datetime
             task_create = TaskCreate(
                 title=params.title,
                 description=params.description,
                 user_id=params.user_id,
-                completed=False  # New tasks are not completed by default
+                is_completed=False,  # New tasks are not completed by default
+                created_at=datetime.utcnow(),
+                updated_at=datetime.utcnow()
             )
 
             # Create the task instance
@@ -54,7 +57,7 @@ def add_task(params: AddTaskParams) -> List[TextContent]:
                     "id": task.id,
                     "title": task.title,
                     "description": task.description,
-                    "completed": task.completed,
+                    "completed": task.is_completed,
                     "created_at": task.created_at.isoformat()
                 }
             }

@@ -27,5 +27,13 @@ class Config:
     OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
     OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
 
+    # OpenRouter Configuration
+    OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
+    OPENROUTER_BASE_URL = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
+    OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "openrouter/auto")  # Auto-select best model
+
+    # AI Provider Selection
+    AI_PROVIDER = os.getenv("AI_PROVIDER", "openai")  # Can be 'openai' or 'openrouter'
+
 # Create a global config instance
 config = Config()

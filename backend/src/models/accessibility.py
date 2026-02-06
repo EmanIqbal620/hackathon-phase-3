@@ -2,7 +2,7 @@
 Accessibility Settings Model
 This module defines the SQLModel for storing user accessibility preferences.
 """
-from sqlmodel import SQLModel, Field, Column
+from sqlmodel import SQLModel, Field
 from datetime import datetime
 from typing import Optional
 import uuid
@@ -29,12 +29,10 @@ class AccessibilitySettings(AccessibilitySettingsBase, table=True):
     )
     created_at: datetime = Field(
         default_factory=datetime.utcnow,
-        sa_column=Column("created_at"),
         description="Timestamp when these settings were created"
     )
     updated_at: datetime = Field(
         default_factory=datetime.utcnow,
-        sa_column=Column("updated_at"),
         description="Timestamp when these settings were last updated"
     )
 

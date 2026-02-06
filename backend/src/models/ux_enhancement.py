@@ -2,7 +2,9 @@
 UX Enhancement Model
 This module defines the SQLModel for tracking UX enhancements and user interactions with them.
 """
-from sqlmodel import SQLModel, Field, Column
+from sqlmodel import SQLModel, Field
+from sqlalchemy import JSON
+from sqlalchemy.orm import mapped_column
 from datetime import datetime
 from typing import Optional, Dict, Any
 import uuid
@@ -16,7 +18,7 @@ class UXEnhancementBase(SQLModel):
     usage_count: int = Field(default=0, description="Number of times the user interacted with this enhancement")
     effectiveness_rating: Optional[float] = Field(default=None, description="Effectiveness rating (0-1 scale)")
     feedback: Optional[str] = Field(default=None, description="User feedback about the enhancement")
-    metadata: Optional[Dict[str, Any]] = Field(default=None, description="Additional metadata about the interaction")
+    enhancement_metadata: Optional[Dict[str, Any]] = Field(default=None, sa_type=JSON, description="Additional metadata about the interaction")
 
 
 class UXEnhancement(UXEnhancementBase, table=True):
@@ -30,12 +32,10 @@ class UXEnhancement(UXEnhancementBase, table=True):
     )
     created_at: datetime = Field(
         default_factory=datetime.utcnow,
-        sa_column=Column("created_at"),
         description="Timestamp when this record was created"
     )
     updated_at: datetime = Field(
         default_factory=datetime.utcnow,
-        sa_column=Column("updated_at"),
         description="Timestamp when this record was last updated"
     )
 
@@ -57,4 +57,4 @@ class UXEnhancementUpdate(SQLModel):
     usage_count: Optional[int] = None
     effectiveness_rating: Optional[float] = None
     feedback: Optional[str] = None
-    metadata: Optional[Dict[str, Any]] = None
+    enhancement_metadata: Optional[Dict[str, Any]] = None

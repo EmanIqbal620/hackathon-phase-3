@@ -1,435 +1,273 @@
-import openai
-import os
-import json
-from typing import List, Dict, Any, Tuple, Optional
+from typing import Tuple, List, Dict, Any, Optional
 from sqlmodel import Session
-from ..mcp_tools.task_operations import (
-    add_task_tool, list_tasks_tool, complete_task_tool,
-    delete_task_tool, update_task_tool
-)
-from ..services.conversation_service import ConversationService
-from ..models.conversation import Message
 import logging
-from ..utils.logger import ai_logger
+import re
+from ..mcp.tools import mcp_tools
+from difflib import SequenceMatcher
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-class AIAgentService:
-    """
-    Service class for integrating AI agent with MCP tools for task management
-    """
 
+class AIAgentService:
     def __init__(self, session: Session):
         self.session = session
-        self.conversation_service = ConversationService(session)
-        self.openai_client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-        self.model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 
-        # Register available tools for the AI agent
-        self.tools = {
-            "add_task": add_task_tool,
-            "list_tasks": list_tasks_tool,
-            "complete_task": complete_task_tool,
-            "delete_task": delete_task_tool,
-            "update_task": update_task_tool
+    def _find_task_by_name_or_index(self, user_id: str, task_identifier: str):
+        """
+        Find a task by name (using fuzzy matching) or by index in the list.
+        """
+        # Get all tasks for the user
+        all_tasks_result = mcp_tools.list_tasks(user_id=user_id)
+        if not all_tasks_result.get("success"):
+            return None
+
+        tasks = all_tasks_result.get("tasks", [])
+
+        # First, try to interpret as an index (e.g., "first", "second", "third", "1", "2", "3", etc.)
+        task_identifier_clean = re.sub(r'[^\w\s]', '', task_identifier.lower().strip())
+
+        # Map ordinal words to numbers
+        ordinals = {
+            "first": 0, "second": 1, "third": 2, "fourth": 3, "fifth": 4,
+            "sixth": 5, "seventh": 6, "eighth": 7, "ninth": 8, "tenth": 9,
+            "1": 0, "2": 1, "3": 2, "4": 3, "5": 4,
+            "6": 5, "7": 6, "8": 7, "9": 8, "10": 9
         }
 
-        # Define the tool definitions for the OpenAI API
-        self.tool_definitions = [
-            {
-                "type": "function",
-                "function": {
-                    "name": "add_task",
-                    "description": "Creates a new task for the user",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "title": {"type": "string", "description": "Title of the task"},
-                            "description": {"type": "string", "description": "Optional description of the task"}
-                        },
-                        "required": ["title"]
-                    }
-                }
-            },
-            {
-                "type": "function",
-                "function": {
-                    "name": "list_tasks",
-                    "description": "Lists tasks for the user, optionally filtered by status",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "status": {
-                                "type": "string",
-                                "enum": ["all", "pending", "completed"],
-                                "default": "all",
-                                "description": "Filter tasks by status: 'all', 'pending', or 'completed'"
-                            }
-                        },
-                        "required": []
-                    }
-                }
-            },
-            {
-                "type": "function",
-                "function": {
-                    "name": "complete_task",
-                    "description": "Marks a task as completed",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "task_id": {"type": "integer", "description": "ID of the task to complete"}
-                        },
-                        "required": ["task_id"]
-                    }
-                }
-            },
-            {
-                "type": "function",
-                "function": {
-                    "name": "delete_task",
-                    "description": "Deletes a task",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "task_id": {"type": "integer", "description": "ID of the task to delete"}
-                        },
-                        "required": ["task_id"]
-                    }
-                }
-            },
-            {
-                "type": "function",
-                "function": {
-                    "name": "update_task",
-                    "description": "Updates a task's title or description",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "task_id": {"type": "integer", "description": "ID of the task to update"},
-                            "title": {"type": "string", "description": "New title for the task (optional)"},
-                            "description": {"type": "string", "description": "New description for the task (optional)"}
-                        },
-                        "required": ["task_id"]
-                    }
-                }
-            }
-        ]
+        if task_identifier_clean in ordinals:
+            idx = ordinals[task_identifier_clean]
+            if 0 <= idx < len(tasks):
+                return tasks[idx]
+
+        # If not an ordinal, try fuzzy matching by title with enhanced logic
+        best_match = None
+        best_ratio = 0
+
+        for task in tasks:
+            task_title = task.get("title", "")
+            task_title_clean = re.sub(r'[^\w\s]', '', task_title.lower().strip())
+
+            # Exact match (case-insensitive)
+            if task_identifier_clean == task_title_clean:
+                return task
+
+            # Partial substring match
+            if task_identifier_clean in task_title_clean or task_title_clean in task_identifier_clean:
+                # Return the one with higher overlap ratio
+                if len(task_identifier_clean) >= len(task_title_clean):
+                    ratio = len(task_title_clean) / len(task_identifier_clean)
+                else:
+                    ratio = len(task_identifier_clean) / len(task_title_clean)
+
+                if ratio > best_ratio:
+                    best_ratio = ratio
+                    best_match = task
+
+            # Fuzzy match using SequenceMatcher
+            ratio = SequenceMatcher(None, task_identifier_clean, task_title_clean).ratio()
+            if ratio > best_ratio and ratio > 0.5:  # Require at least 50% similarity
+                best_ratio = ratio
+                best_match = task
+
+        return best_match
 
     async def process_message(
         self,
         user_id: str,
         message: str,
-        conversation_history: List[Message]
+        conversation_history: List
     ) -> Tuple[str, List[Dict[str, Any]]]:
         """
-        Process a user message with the AI agent and execute appropriate tools
+        Process a user message using AI and MCP tools
 
         Args:
-            user_id: The ID of the user sending the message
-            message: The user's message to process
-            conversation_history: List of previous messages in the conversation
+            user_id: The ID of the user
+            message: The user's message
+            conversation_history: Previous messages in the conversation
 
         Returns:
-            A tuple containing (AI response, list of tool call results)
+            Tuple of (AI response, list of tool call results)
         """
-        conversation_id = conversation_history[-1].conversation_id if conversation_history else "unknown"
-        import time
-        start_time = time.time()
+        # Parse the message to determine intent
+        intent, params = self._parse_intent(message)
 
+        # Special handling for update_task and delete_task to allow natural language identification
+        if intent in ['update_task', 'delete_task', 'complete_task'] and 'task_id' in params:
+            task_identifier = params['task_id']
+            # Check if this looks like a UUID or if it's a natural language reference
+            uuid_pattern = r'^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$'
+
+            if not re.match(uuid_pattern, task_identifier):
+                # This is likely a natural language reference, try to find the actual task
+                matched_task = self._find_task_by_name_or_index(user_id, task_identifier)
+                if matched_task:
+                    params['task_id'] = matched_task['id']
+                else:
+                    # Could not find the task
+                    return f"Sorry, I couldn't find a task matching '{task_identifier}'. Please check the task name or use 'show my tasks' to see all tasks.", []
+
+        # Execute the appropriate MCP tool based on intent
+        tool_result = await self._execute_tool(intent, user_id, params)
+
+        # Generate AI response based on tool result
+        ai_response = self._generate_response(intent, tool_result, message)
+
+        # Format tool call results
+        tool_call_results = [{
+            "tool": intent,
+            "status": "success" if tool_result.get("success") else "error",
+            "result": tool_result,
+            "arguments": params
+        }] if tool_result else []
+
+        return ai_response, tool_call_results
+
+    def _parse_intent(self, message: str) -> Tuple[str, Dict[str, Any]]:
+        """Parse user message to determine intent and extract parameters."""
+        message_lower = message.lower().strip()
+
+        # Define patterns for different intents - order matters, more specific first
+        patterns = {
+            'list_tasks': [
+                r'(?:show|list|display|view|see)\s+(?:my\s+)?tasks?',
+                r'(?:what\s+do\s+i\s+have|what\'?s\s+on\s+my\s+list|my\s+todos?)',
+                r'(?:show|list|display|view|see)\s+(?:my\s+)?(?:completed|done)\s+tasks?',
+            ],
+            'add_task': [
+                r'(?:add|create|new|make)\s+(?:a\s+)?task\s+to\s+(.+)',
+                r'(?:add|create|new|make)\s+(.+)',
+                r'(?:buy|get|complete|finish|remind me to|schedule|plan)\s+(.+)',
+            ],
+            'complete_task': [
+                r'(?:mark|complete|done|finish)\s+(?:task\s+)?([a-zA-Z0-9\-]+|\w+(?:\s+\w+)*)(?:\s+as)?\s*(?:done|completed|finished)?',
+                r'(?:complete|finish)\s+(?:task\s+)?([a-zA-Z0-9\-]+|\w+(?:\s+\w+)*)',
+                r'(?:mark|complete|done|finish)\s+(?:the\s+)?(.+?)\s+(?:task|as)?\s*(?:done|completed|finished)?',
+            ],
+            'delete_task': [
+                r'(?:delete|remove|cancel)\s+(?:task\s+)?([a-zA-Z0-9\-]+|\w+(?:\s+\w+)*)',
+                r'(?:remove|delete)\s+(?:task\s+)?([a-zA-Z0-9\-]+|\w+(?:\s+\w+)*)',
+                r'(?:delete|remove|cancel)\s+(?:the\s+)?(.+?)\s+task',
+            ],
+            'update_task': [
+                r'(?:update|change|edit)\s+(?:task\s+)?([a-zA-Z0-9\-]+|\w+(?:\s+\w+)*)\s+to\s+(.+)',
+                r'(?:update|change|edit)\s+(?:the\s+)?(.+?)\s+task\s+to\s+(.+)',
+                r'(?:update|change|edit)\s+(?:task\s+)?(.+?)$',  # For "update task X" without "to" clause
+            ]
+        }
+
+        for intent, pattern_list in patterns.items():
+            for pattern in pattern_list:
+                match = re.search(pattern, message_lower)
+                if match:
+                    groups = match.groups()
+
+                    if intent == 'add_task':
+                        return intent, {'title': groups[0].strip().capitalize()}
+                    elif intent in ['complete_task', 'delete_task']:
+                        # Handle different group patterns
+                        if len(groups) >= 1:
+                            return intent, {'task_id': groups[0].strip()}
+                    elif intent == 'update_task':
+                        # Handle different group patterns for update
+                        if len(groups) == 2:
+                            # Pattern: ([task_id_or_name])\s+to\s+(.+) or (.+?)\s+task\s+to\s+(.+)
+                            # Both cases: first group is task identifier, second is new title
+                            return intent, {'task_id': groups[0].strip(), 'title': groups[1].strip().capitalize()}
+                        elif len(groups) == 1:
+                            # Pattern: "update task X" without "to" clause - need to ask for new title
+                            return intent, {'task_id': groups[0].strip()}
+                    elif intent == 'list_tasks':
+                        return intent, {}
+
+        return 'unknown', {}
+
+    async def _execute_tool(self, intent: str, user_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute the appropriate MCP tool based on intent."""
         try:
-            # Log interaction start
-            ai_logger.log_interaction_start(
-                user_id=user_id,
-                conversation_id=conversation_id,
-                message=message
-            )
+            if intent == 'add_task':
+                return mcp_tools.add_task(
+                    user_id=user_id,
+                    title=params.get('title', 'New Task'),
+                    description=params.get('description')
+                )
+            elif intent == 'list_tasks':
+                return mcp_tools.list_tasks(user_id=user_id)
+            elif intent == 'complete_task':
+                return mcp_tools.complete_task(
+                    user_id=user_id,
+                    task_id=params.get('task_id')
+                )
+            elif intent == 'delete_task':
+                return mcp_tools.delete_task(
+                    user_id=user_id,
+                    task_id=params.get('task_id')
+                )
+            elif intent == 'update_task':
+                # Validate that both task_id and title are provided
+                if not params.get('task_id'):
+                    return {"success": False, "error": "Please specify which task you'd like to update."}
+                if not params.get('title'):
+                    return {"success": False, "error": "To update a task, please specify what you'd like to change it to. For example: 'update task study to study physics' or 'update task study to complete assignment'."}
 
-            # Format conversation history for the AI with context management
-            messages = self._format_conversation_history(conversation_history, message)
-
-            # Prepare the request to OpenAI
-            response = self.openai_client.chat.completions.create(
-                model=self.model,
-                messages=messages,
-                tools=self.tool_definitions,
-                tool_choice="auto"
-            )
-
-            # Process the response
-            response_message = response.choices[0].message
-            tool_calls = response_message.tool_calls
-
-            tool_call_results = []
-
-            # Execute any requested tool calls
-            if tool_calls:
-                for tool_call in tool_calls:
-                    function_name = tool_call.function.name
-                    function_args = json.loads(tool_call.function.arguments)
-
-                    # Enhance context awareness by inferring missing information from conversation history
-                    enhanced_args = self._enhance_context_with_history(
-                        function_name, function_args, conversation_history
-                    )
-
-                    # Log the tool call
-                    logger.info(f"Executing tool: {function_name} with args: {enhanced_args}")
-
-                    # Execute the tool with timing
-                    import time
-                    tool_start_time = time.time()
-
-                    if function_name in self.tools:
-                        tool = self.tools[function_name]
-                        result = await tool.execute(user_id, **enhanced_args)
-
-                        # Calculate execution time
-                        execution_time_ms = (time.time() - tool_start_time) * 1000
-
-                        # Log the result
-                        logger.info(f"Tool {function_name} result: {result}")
-
-                        # Log tool execution to AI logger
-                        ai_logger.log_tool_execution(
-                            user_id=user_id,
-                            conversation_id=conversation_id,
-                            tool_name=function_name,
-                            parameters=enhanced_args,
-                            result=result.result or {},
-                            execution_time_ms=execution_time_ms,
-                            success=result.success
-                        )
-
-                        # Create a log entry for the tool call
-                        self.conversation_service.create_tool_call_log(
-                            user_id=user_id,
-                            conversation_id=conversation_history[-1].conversation_id if conversation_history else 0,
-                            message_id=conversation_history[-1].id if conversation_history else None,
-                            tool_name=function_name,
-                            parameters=enhanced_args,
-                            result=result.result,
-                            status=result.status
-                        )
-
-                        tool_call_results.append({
-                            "tool": function_name,
-                            "status": result.status,
-                            "result": result.result,
-                            "error": result.error if not result.success else None,
-                            "execution_time_ms": execution_time_ms
-                        })
-                    else:
-                        logger.warning(f"Unknown tool requested: {function_name}")
-                        # Log unknown tool to AI logger
-                        ai_logger.log_tool_execution(
-                            user_id=user_id,
-                            conversation_id=conversation_id,
-                            tool_name=function_name,
-                            parameters=function_args,
-                            result={"error": f"Unknown tool: {function_name}"},
-                            execution_time_ms=0,
-                            success=False
-                        )
-                        tool_call_results.append({
-                            "tool": function_name,
-                            "status": "error",
-                            "result": None,
-                            "error": f"Unknown tool: {function_name}",
-                            "execution_time_ms": 0
-                        })
-
-            # If the AI response has content, return it; otherwise, construct a detailed response based on tool calls
-            ai_response = ""
-            if response_message.content:
-                ai_response = response_message.content
-            elif tool_call_results:
-                # Construct a detailed response based on tool call results
-                successful_calls = [result for result in tool_call_results if result["status"] == "success"]
-                error_calls = [result for result in tool_call_results if result["status"] == "error"]
-
-                if successful_calls:
-                    # Create detailed feedback for successful operations
-                    success_details = []
-                    for result in successful_calls:
-                        tool_name = result["tool"]
-                        tool_result = result["result"]
-
-                        if tool_name == "add_task" and tool_result:
-                            success_details.append(f"Added task '{tool_result.get('title', 'unnamed')}' (ID: {tool_result.get('task_id', 'unknown')})")
-                        elif tool_name == "complete_task" and tool_result:
-                            success_details.append(f"Marked task '{tool_result.get('title', 'unnamed')}' as completed")
-                        elif tool_name == "delete_task" and tool_result:
-                            success_details.append(f"Deleted task (ID: {tool_result.get('task_id', 'unknown')})")
-                        elif tool_name == "update_task" and tool_result:
-                            success_details.append(f"Updated task '{tool_result.get('title', 'unnamed')}'")
-                        elif tool_name == "list_tasks" and tool_result:
-                            task_count = tool_result.get('count', 0)
-                            success_details.append(f"Retrieved {task_count} tasks")
-                        else:
-                            success_details.append(f"Completed {tool_name} operation")
-
-                    ai_response += f"I've completed the following actions: {', '.join(success_details)}. "
-
-                if error_calls:
-                    # Create detailed feedback for failed operations
-                    error_details = []
-                    for result in error_calls:
-                        tool_name = result["tool"]
-                        error_msg = result["error"] or "Unknown error"
-                        error_details.append(f"{tool_name}: {error_msg}")
-
-                    ai_response += f"There were some issues: {', '.join(error_details)}. "
-
-                if not successful_calls and not error_calls:
-                    ai_response = "I processed your request."
+                return mcp_tools.update_task(
+                    user_id=user_id,
+                    task_id=params.get('task_id'),
+                    title=params.get('title')
+                )
             else:
-                ai_response = "I've processed your request."
-
-            # Calculate total execution time
-            total_execution_time = (time.time() - start_time) * 1000
-
-            # Log interaction end
-            ai_logger.log_interaction_end(
-                user_id=user_id,
-                conversation_id=conversation_id,
-                response=ai_response,
-                tools_used=[result["tool"] for result in tool_call_results],
-                execution_time_ms=total_execution_time
-            )
-
-            return ai_response, tool_call_results
-
+                # For unknown intents, return a general response
+                return {"success": True, "message": f"Received: {params.get('message', 'unknown')}"}
         except Exception as e:
-            total_execution_time = (time.time() - start_time) * 1000
+            logger.error(f"Error executing tool {intent}: {str(e)}")
+            return {"success": False, "error": str(e)}
 
-            # Log error to AI logger
-            ai_logger.log_error(
-                user_id=user_id,
-                conversation_id=conversation_id,
-                error=e,
-                context="Error processing AI interaction"
-            )
+    def _generate_response(self, intent: str, result: Dict[str, Any], original_message: str) -> str:
+        """Generate appropriate AI response based on intent and result."""
+        if not result.get('success'):
+            error_msg = result.get('error', 'Unknown error occurred')
+            return f"Sorry, I couldn't perform that action: {error_msg}"
 
-            logger.error(f"Error processing message: {str(e)}")
-            error_msg = f"Sorry, I encountered an error processing your request: {str(e)}"
-            return error_msg, [{"tool": "error", "status": "error", "result": None, "error": str(e), "execution_time_ms": total_execution_time}]
+        if intent == 'add_task':
+            task = result.get('task', {})
+            title = task.get('title', 'Untitled')
+            return f"✅ I've added \"{title}\" to your tasks."
 
-    def _enhance_context_with_history(
-        self,
-        tool_name: str,
-        args: Dict[str, Any],
-        conversation_history: List[Message]
-    ) -> Dict[str, Any]:
-        """
-        Enhance the arguments with context from conversation history
+        elif intent == 'list_tasks':
+            tasks = result.get('tasks', [])
+            if not tasks:
+                return "📋 You don't have any tasks on your list right now."
 
-        Args:
-            tool_name: The name of the tool being called
-            args: The original arguments passed to the tool
-            conversation_history: List of previous messages in the conversation
+            # Show all tasks, but indicate if there are many
+            if len(tasks) > 10:
+                task_list = "\n".join([
+                    f"• {task.get('title', 'Untitled')} ({'Completed' if task.get('completed', False) else 'Pending'})"
+                    for task in tasks
+                ])
+                return f"📋 Here are all your tasks ({len(tasks)} total):\n{task_list}\n\n(Total: {len(tasks)} tasks)"
+            else:
+                task_list = "\n".join([
+                    f"• {task.get('title', 'Untitled')} ({'Completed' if task.get('completed', False) else 'Pending'})"
+                    for task in tasks
+                ])
+                return f"📋 Here are your tasks:\n{task_list}"
 
-        Returns:
-            Enhanced arguments with inferred context
-        """
-        # For certain tools, we can infer missing information from the conversation history
-        if tool_name in ["complete_task", "delete_task", "update_task"] and "task_id" not in args:
-            # Try to infer task_id from the conversation history
-            task_id = self._infer_task_id_from_context(args, conversation_history)
-            if task_id:
-                args["task_id"] = task_id
-                logger.info(f"Inferred task_id {task_id} from conversation context for {tool_name}")
+        elif intent in ['complete_task', 'delete_task', 'update_task']:
+            if intent == 'complete_task':
+                task = result.get('task', {})
+                title = task.get('title', 'unknown')
+                return f"✅ I've completed \"{title}\" for you."
+            elif intent == 'delete_task':
+                task = result.get('task', {})
+                title = task.get('title', 'Task')
+                return f"🗑️ I've deleted \"{title}\" from your tasks."
+            elif intent == 'update_task':
+                # Check if update failed due to missing title parameter
+                if not params.get('title'):
+                    return "To update a task, please specify what you'd like to change it to. For example: 'update task study to study physics' or 'update task study to complete assignment'."
 
-        return args
+                task = result.get('task', {})
+                title = task.get('title', 'untitled')
+                return f"✏️ I've updated \"{title}\" in your tasks."
 
-    def _infer_task_id_from_context(
-        self,
-        args: Dict[str, Any],
-        conversation_history: List[Message]
-    ) -> Optional[int]:
-        """
-        Infer the task ID from the conversation context
-
-        Args:
-            args: The arguments passed to the tool
-            conversation_history: List of previous messages in the conversation
-
-        Returns:
-            Inferred task ID if found, None otherwise
-        """
-        # Look for task references in recent messages
-        for message in reversed(conversation_history[-5:]):  # Check last 5 messages
-            content = message.content.lower()
-
-            # Look for numeric task IDs mentioned in the conversation
-            import re
-            task_ids = re.findall(r'task (\d+)', content)
-            if task_ids:
-                # Return the last mentioned task ID
-                return int(task_ids[-1])
-
-            # Look for specific task titles mentioned in the conversation
-            if "title" in args:
-                if args["title"].lower() in content:
-                    # This is a simplified approach - in a real implementation,
-                    # we would need to match the actual task title to its ID
-                    # For now, we'll just return None since we don't have a way to match titles to IDs
-                    # without querying the database
-                    pass
-
-        return None
-
-    def _format_conversation_history(self, conversation_history: List[Message], current_message: str) -> List[Dict[str, str]]:
-        """
-        Format conversation history for the AI model
-
-        Args:
-            conversation_history: List of previous messages in the conversation
-            current_message: The current user message
-
-        Returns:
-            List of messages formatted for the AI model
-        """
-        messages = [
-            {
-                "role": "system",
-                "content": "You are a helpful assistant that manages tasks using specialized tools. "
-                           "When users ask you to add, list, update, complete, or delete tasks, "
-                           "use the appropriate tools. Always respond in a friendly, helpful manner "
-                           "and confirm actions you've taken."
-            }
-        ]
-
-        # Add historical messages
-        for msg in conversation_history:
-            role = "assistant" if msg.role == "assistant" else "user"
-            messages.append({
-                "role": role,
-                "content": msg.content
-            })
-
-        # Add the current message
-        messages.append({
-            "role": "user",
-            "content": current_message
-        })
-
-        return messages
-
-    def validate_task_operation(self, user_id: str, operation: str, task_id: Optional[int] = None) -> bool:
-        """
-        Validate that a user can perform a specific operation on a task
-
-        Args:
-            user_id: The ID of the user requesting the operation
-            operation: The type of operation ('read', 'update', 'delete', 'complete')
-            task_id: The ID of the task (if applicable)
-
-        Returns:
-            True if the user is authorized to perform the operation, False otherwise
-        """
-        # For now, we assume all operations are valid if the user ID matches
-        # In a real implementation, we'd check if the task belongs to the user
-        return True
+        else:
+            return f"Got it! How can I help you with your tasks?"

@@ -2,7 +2,7 @@
 Performance Metrics Model
 This module defines the SQLModel for storing performance metrics data.
 """
-from sqlmodel import SQLModel, Field, Column
+from sqlmodel import SQLModel, Field
 from datetime import datetime
 from typing import Optional
 import uuid
@@ -31,7 +31,6 @@ class PerformanceMetrics(PerformanceMetricsBase, table=True):
     )
     created_at: datetime = Field(
         default_factory=datetime.utcnow,
-        sa_column=Column("created_at"),
         description="Timestamp when this metric was recorded"
     )
 

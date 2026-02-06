@@ -7,8 +7,8 @@ from typing import List, Optional
 from mcp.types import TextContent
 import logging
 from sqlmodel import Session, select
-from ..models import Task
-from ...database import sync_engine
+from ..models.task import Task
+from ..database import sync_engine
 
 
 # Set up logging
@@ -29,12 +29,13 @@ def list_tasks(params: ListTasksParams) -> List[TextContent]:
     try:
         with Session(sync_engine) as session:
             # Build query based on status filter
-            query = select(Task).where(Task.user_id == params.user_id)
+            # Exclude soft-deleted tasks (where deleted_at is not null)
+            query = select(Task).where(Task.user_id == params.user_id).where(Task.deleted_at == None)
 
             if params.status_filter == "pending":
-                query = query.where(Task.completed == False)
+                query = query.where(Task.is_completed == False)
             elif params.status_filter == "completed":
-                query = query.where(Task.completed == True)
+                query = query.where(Task.is_completed == True)
 
             # Execute query
             tasks = session.exec(query).all()
@@ -46,7 +47,7 @@ def list_tasks(params: ListTasksParams) -> List[TextContent]:
                     "id": task.id,
                     "title": task.title,
                     "description": task.description,
-                    "completed": task.completed,
+                    "completed": task.is_completed,
                     "created_at": task.created_at.isoformat(),
                     "updated_at": task.updated_at.isoformat() if task.updated_at else None
                 }
@@ -112,4 +113,4 @@ def mock_list_tasks(params: ListTasksParams) -> List[TextContent]:
         "filter_applied": params.status_filter
     }
 
-    return [TextContent(type="text", text=str(response))]
+    return [TextContent(text=str(response))]

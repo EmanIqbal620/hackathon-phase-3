@@ -1,4 +1,4 @@
-from sqlmodel import SQLModel, Field, Column
+from sqlmodel import SQLModel, Field, Column, Relationship
 from typing import Optional
 from datetime import datetime
 import uuid
@@ -10,8 +10,8 @@ class TaskBase(SQLModel):
     title: str = Field(nullable=False, max_length=255)
     description: Optional[str] = Field(default=None)
     priority: str = Field(default="medium", description="Priority level: 'low', 'medium', 'high'")
-    due_date: Optional[datetime] = Field(default=None, sa_column=Column("due_date", default=None))
-    user_id: str = Field(nullable=False)  # Foreign key to User
+    due_date: Optional[datetime] = Field(default=None)
+    user_id: str = Field(foreign_key="user.id", nullable=False)  # Foreign key to User
 
 
 class Task(TaskBase, table=True):
@@ -26,6 +26,9 @@ class Task(TaskBase, table=True):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     completed_at: Optional[datetime] = Field(default=None)
     deleted_at: Optional[datetime] = Field(default=None)  # For soft delete capability
+
+    # Relationship to user
+    user: Optional["User"] = Relationship(back_populates="tasks", sa_relationship_kwargs={"primaryjoin": "Task.user_id==User.id"})
 
     # AI and performance-related fields
     ai_suggestion_source: Optional[str] = Field(default=None, description="Indicates if created from AI suggestion")

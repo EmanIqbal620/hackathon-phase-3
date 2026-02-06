@@ -2,9 +2,11 @@
 Micro Feature Model
 This module defines the SQLModel for storing optional micro-features that users can enable/disable.
 """
-from sqlmodel import SQLModel, Field, Column
+from sqlmodel import SQLModel, Field
+from sqlalchemy import JSON
+from sqlalchemy.orm import mapped_column
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Dict, Any
 import uuid
 
 
@@ -28,12 +30,10 @@ class MicroFeature(MicroFeatureBase, table=True):
     )
     created_at: datetime = Field(
         default_factory=datetime.utcnow,
-        sa_column=Column("created_at"),
         description="Timestamp when this feature was defined"
     )
     updated_at: datetime = Field(
         default_factory=datetime.utcnow,
-        sa_column=Column("updated_at"),
         description="Timestamp when this feature was last updated"
     )
 
@@ -63,7 +63,7 @@ class UserMicroFeaturePreferenceBase(SQLModel):
     user_id: str = Field(..., description="ID of the user")
     micro_feature_id: str = Field(..., description="ID of the micro feature")
     is_enabled: bool = Field(default=False, description="Whether the user has enabled this feature")
-    custom_settings: Optional[dict] = Field(default=None, description="Custom settings for this feature")
+    custom_settings: Optional[Dict[str, Any]] = Field(default=None, sa_type=JSON, description="Custom settings for this feature")
 
 
 class UserMicroFeaturePreference(UserMicroFeaturePreferenceBase, table=True):
@@ -77,12 +77,10 @@ class UserMicroFeaturePreference(UserMicroFeaturePreferenceBase, table=True):
     )
     created_at: datetime = Field(
         default_factory=datetime.utcnow,
-        sa_column=Column("created_at"),
         description="Timestamp when this preference was set"
     )
     updated_at: datetime = Field(
         default_factory=datetime.utcnow,
-        sa_column=Column("updated_at"),
         description="Timestamp when this preference was last updated"
     )
 
@@ -102,4 +100,4 @@ class UserMicroFeaturePreferenceRead(UserMicroFeaturePreferenceBase):
 class UserMicroFeaturePreferenceUpdate(SQLModel):
     """Schema for updating user micro feature preference records"""
     is_enabled: Optional[bool] = None
-    custom_settings: Optional[dict] = None
+    custom_settings: Optional[Dict[str, Any]] = None

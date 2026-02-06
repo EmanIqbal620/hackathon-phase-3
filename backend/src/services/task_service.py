@@ -50,7 +50,7 @@ class TaskService:
         return task
 
     @staticmethod
-    def create_task(session: Session, title: str, description: Optional[str], user_id: str) -> Task:
+    def create_task(session: Session, title: str, description: Optional[str], user_id: str, priority: str = "medium") -> Task:
         """
         Create a new task for a user.
 
@@ -59,6 +59,7 @@ class TaskService:
             title: Task title
             description: Task description (optional)
             user_id: ID of the user creating the task
+            priority: Priority level ('low', 'medium', 'high'), defaults to 'medium'
 
         Returns:
             Created task
@@ -66,6 +67,7 @@ class TaskService:
         task = Task(
             title=title,
             description=description,
+            priority=priority,
             user_id=user_id
         )
 
@@ -81,6 +83,7 @@ class TaskService:
         user_id: str,
         title: Optional[str] = None,
         description: Optional[str] = None,
+        priority: Optional[str] = None,
         is_completed: Optional[bool] = None
     ) -> Optional[Task]:
         """
@@ -92,6 +95,7 @@ class TaskService:
             user_id: ID of the user who owns the task
             title: New title (optional)
             description: New description (optional)
+            priority: New priority (optional)
             is_completed: New completion status (optional)
 
         Returns:
@@ -110,6 +114,9 @@ class TaskService:
 
         if description is not None:
             task.description = description
+
+        if priority is not None:
+            task.priority = priority
 
         if is_completed is not None:
             task.is_completed = is_completed
