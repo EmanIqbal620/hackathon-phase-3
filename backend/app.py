@@ -33,9 +33,9 @@ allowed_origins = os.getenv("CORS_ORIGINS", "").split(",") if os.getenv("CORS_OR
 allowed_origins.extend([
     "http://localhost:3000",  # Local frontend development
     "https://emaniqbal-todo-phase2.hf.space",  # Deployed frontend on Hugging Face
-    "http://localhost:8000",  # Local backend (for testing)
+    "http://localhost:7860",  # Local backend (correct port)
     "http://127.0.0.1:3000",
-    "http://127.0.0.1:8000",
+    "http://127.0.0.1:7860",
     "http://localhost:3001",
     "http://localhost:3002",
     "http://127.0.0.1:3001",
