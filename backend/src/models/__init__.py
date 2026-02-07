@@ -1,7 +1,7 @@
 """
 Database models for the Todo App
 """
-from .user import User
+from .user import User, UserCreate, UserRead, UserBase
 from .task import Task, TaskCreate, TaskRead, TaskBase, TaskUpdate
 from .conversation import Conversation, Message, ConversationCreate, ConversationRead, MessageCreate, MessageRead
 from .accessibility import AccessibilitySettings, AccessibilitySettingsCreate, AccessibilitySettingsRead, AccessibilitySettingsUpdate
@@ -13,10 +13,13 @@ from .micro_feature import MicroFeature, UserMicroFeaturePreference, MicroFeatur
 from .tool_call_log import ToolCallLog
 from .user_interaction import UserInteraction, UserInteractionCreate, UserInteractionRead, UserInteractionUpdate, UserInteractionStats
 from .ux_enhancement import UXEnhancement, UXEnhancementCreate, UXEnhancementRead, UXEnhancementUpdate
-from .chat_old import Conversation as OldConversation, Message as OldMessage
+# Import old chat models if needed, but avoid naming conflicts
 
 __all__ = [
     "User",
+    "UserCreate",
+    "UserRead",
+    "UserBase",
     "Task",
     "TaskCreate",
     "TaskRead",
@@ -68,6 +71,5 @@ __all__ = [
     "UXEnhancementCreate",
     "UXEnhancementRead",
     "UXEnhancementUpdate",
-    "OldConversation",
-    "OldMessage"
+
 ]
