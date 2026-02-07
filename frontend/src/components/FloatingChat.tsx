@@ -41,7 +41,7 @@ const FloatingChat: React.FC = () => {
         className="fixed bottom-8 right-4 z-50 p-3 rounded-full shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-offset-2 sm:bottom-8 sm:right-24"
         style={{
           backgroundColor: theme.colors.accent,
-          color: theme.colors.onAccent,
+          color: theme.colors.text.primary,
           boxShadow: `0 4px 20px ${theme.colors.accent}40, 0 0 0 2px ${theme.colors.accent}20`,
           zIndex: 50
         }}
@@ -68,7 +68,7 @@ const FloatingChat: React.FC = () => {
             className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-xs"
             style={{
               backgroundColor: '#ef4444', // Red for unread messages
-              color: theme.colors.onAccent,
+              color: theme.colors.text.primary,
             }}
           >
             !
@@ -105,7 +105,7 @@ const FloatingChat: React.FC = () => {
                   className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
                   style={{
                     backgroundColor: theme.colors.accent,
-                    color: theme.colors.onAccent,
+                    color: theme.colors.text.primary,
                   }}
                 >
                   AI
@@ -184,7 +184,7 @@ const FloatingChat: React.FC = () => {
                     className="px-4 py-2 rounded-lg font-medium"
                     style={{
                       backgroundColor: theme.colors.accent,
-                      color: theme.colors.onAccent,
+                      color: theme.colors.text.primary,
                     }}
                   >
                     Log In

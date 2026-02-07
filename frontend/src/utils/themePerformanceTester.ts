@@ -337,7 +337,7 @@ export const testCSSVariablePerformance = async (
 }> => {
   const updateTimes: number[] = [];
   const allVariables = Object.values(themesWithVariables).flatMap(theme => Object.keys(theme));
-  const uniqueVariables = [...new Set(allVariables)];
+    const uniqueVariables = Array.from(new Set(allVariables));
 
   // Test updating CSS variables
   for (const [themeName, variables] of Object.entries(themesWithVariables)) {

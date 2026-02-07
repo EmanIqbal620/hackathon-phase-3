@@ -6,18 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
-
-interface Task {
-  id: string;
-  title: string;
-  description?: string;
-  is_completed: boolean;
-  created_at: string;
-  completed_at?: string;
-  due_date?: string;
-  priority: 'low' | 'medium' | 'high';
-  category?: string;
-}
+import { Task } from '@/types/task';
 
 interface Suggestion {
   id: string;

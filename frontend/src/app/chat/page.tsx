@@ -9,7 +9,8 @@ import { useTask } from '@/contexts/TaskContext';
 import { useTheme } from '@/contexts/ThemeContext';
 
 const ChatPage: React.FC = () => {
-  const { user, token, isAuthenticated } = useAuth();
+  const { user, getToken, isAuthenticated } = useAuth();
+  const token = getToken();
   const { showLoading, hideLoading } = useLoading();
   const { tasks } = useTask();
   const { theme } = useTheme();

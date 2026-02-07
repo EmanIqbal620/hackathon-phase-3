@@ -32,7 +32,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isOwnMessage }) => {
             className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
             style={{
               backgroundColor: theme.colors.accent,
-              color: theme.colors.onAccent,
+              color: theme.colors.text.primary,
             }}
           >
             AI
@@ -63,7 +63,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isOwnMessage }) => {
                 ? `${theme.colors.accent}20` // Dark mode: soft accent tint
                 : `${theme.colors.accent}10`, // Light mode: very light accent tint
             color: isOwnMessage
-              ? theme.colors.onAccent // User: white text on accent
+              ? theme.colors.text.primary // User: primary text on accent
               : theme.colors.text.primary, // Use theme text for both modes
             border: isOwnMessage
               ? 'none'
@@ -75,7 +75,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isOwnMessage }) => {
             className="whitespace-pre-wrap break-words"
             style={{
               color: isOwnMessage
-                ? theme.colors.onAccent
+                ? theme.colors.text.primary
                 : theme.colors.text.primary, // Use theme text for both modes
               lineHeight: '1.4',
               fontSize: '0.875rem'
@@ -88,7 +88,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isOwnMessage }) => {
             className={`text-xs mt-1 ${isOwnMessage ? 'text-right' : 'text-left'}`}
             style={{
               color: isOwnMessage
-                ? `${theme.colors.onAccent}CC`
+                ? `${theme.colors.text.primary}CC`
                 : theme.colors.text.muted, // Use theme muted text for both modes
               marginTop: '0.25rem'
             }}
@@ -105,7 +105,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isOwnMessage }) => {
             className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
             style={{
               backgroundColor: theme.colors.accent, // Changed from mutedText to accent for better consistency
-              color: theme.colors.onAccent,
+              color: theme.colors.text.primary,
             }}
           >
             {message.userId ? message.userId.charAt(0).toUpperCase() : 'U'}

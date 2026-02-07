@@ -38,7 +38,7 @@ const MatteCard: React.FC<CardProps> = ({
   const cardStyle = {
     backgroundColor: theme.colors.surface,
     borderColor: theme.colors.border,
-    ...(elevated ? { boxShadow: theme.shadows.elevated } : {})
+    ...(elevated ? { boxShadow: theme.shadows.card } : {})
   };
 
   if (animateOnHover && !onClick) {

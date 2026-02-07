@@ -7,18 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval } from 'date-fns';
-
-interface Task {
-  id: string;
-  title: string;
-  description?: string;
-  is_completed: boolean;
-  created_at: string;
-  completed_at?: string;
-  due_date?: string;
-  priority: 'low' | 'medium' | 'high';
-  category?: string;
-}
+import { Task } from '@/types/task';
 
 interface TaskAnalyticsProps {
   tasks: Task[];
@@ -197,7 +186,7 @@ const TaskAnalytics: React.FC<TaskAnalyticsProps> = ({ tasks }) => {
           className="px-4 py-2 rounded-lg"
           style={{
             backgroundColor: timeRange === 'week' ? theme.colors.accent : theme.colors.surface,
-            color: timeRange === 'week' ? theme.colors.onAccent : theme.colors.text.primary,
+            color: timeRange === 'week' ? theme.colors.text.primary : theme.colors.text.primary,
             border: `1px solid ${theme.colors.border}`
           }}
           onClick={() => setTimeRange('week')}
@@ -208,7 +197,7 @@ const TaskAnalytics: React.FC<TaskAnalyticsProps> = ({ tasks }) => {
           className="px-4 py-2 rounded-lg"
           style={{
             backgroundColor: timeRange === 'month' ? theme.colors.accent : theme.colors.surface,
-            color: timeRange === 'month' ? theme.colors.onAccent : theme.colors.text.primary,
+            color: timeRange === 'month' ? theme.colors.text.primary : theme.colors.text.primary,
             border: `1px solid ${theme.colors.border}`
           }}
           onClick={() => setTimeRange('month')}
@@ -219,7 +208,7 @@ const TaskAnalytics: React.FC<TaskAnalyticsProps> = ({ tasks }) => {
           className="px-4 py-2 rounded-lg"
           style={{
             backgroundColor: timeRange === 'quarter' ? theme.colors.accent : theme.colors.surface,
-            color: timeRange === 'quarter' ? theme.colors.onAccent : theme.colors.text.primary,
+            color: timeRange === 'quarter' ? theme.colors.text.primary : theme.colors.text.primary,
             border: `1px solid ${theme.colors.border}`
           }}
           onClick={() => setTimeRange('quarter')}

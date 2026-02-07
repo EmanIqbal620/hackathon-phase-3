@@ -12,6 +12,7 @@ import { useToast } from '@/contexts/ToastContext';
 import { useTask } from '@/contexts/TaskContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { NotificationTypeEnum } from '@/types/ui';
+import { Task } from '@/types/task';
 
 // Note: We use the imported Task type from '@/types/task' which has the correct snake_case fields
 // The mapping to camelCase happens in the component rendering
@@ -22,7 +23,7 @@ const CompletedTasksPage: React.FC = () => {
   const { showToast } = useToast();
   const { tasks, loading: tasksLoading, error, toggleTaskCompletion, deleteTask, updateTask, createTask, fetchTasks } = useTask();
   const { isAuthenticated } = useAuth();
-  const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
+  const [filteredTasks, setFilteredTasks] = useState<any[]>([]);
   const [sortBy, setSortBy] = useState<'dateCreated' | 'dueDate' | 'priority' | 'title'>('dateCreated');
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -79,20 +80,7 @@ const CompletedTasksPage: React.FC = () => {
       }
     });
 
-    // Map to the format expected by the UI components
-    const mappedTasks = completedTasks.map(task => ({
-      id: task.id,
-      title: task.title,
-      description: task.description,
-      isCompleted: task.is_completed,
-      priority: task.priority || 'medium',
-      dueDate: task.due_date,
-      createdAt: task.created_at,
-      updatedAt: task.updated_at,
-      completedAt: task.completed_at,
-    }));
-
-    setFilteredTasks(mappedTasks);
+    setFilteredTasks(completedTasks);
   }, [tasks, sortBy, searchTerm]);
 
   const isLoading = tasksLoading || initialLoading;
@@ -275,7 +263,14 @@ const CompletedTasksPage: React.FC = () => {
             </motion.div>
           ) : (
             <TaskList
-              tasks={filteredTasks}
+              tasks={filteredTasks.map(task => ({
+                ...task,
+                isCompleted: task.is_completed,
+                createdAt: task.created_at,
+                updatedAt: task.updated_at,
+                completedAt: task.completed_at,
+                dueDate: task.due_date,
+              }))}
               onToggle={handleToggleTask}
               onEdit={handleEditTask}
               onDelete={handleDeleteTask}

@@ -49,9 +49,9 @@ export const verifyPageThemeConsistency = async (pageUrl: string): Promise<Theme
 
   // Check common themed elements
   const themedElements = [
-    ...document.querySelectorAll('.theme-background, [style*="--"], [class*="bg-"], [class*="text-"]'),
-    ...document.querySelectorAll('button, input, select, textarea, a'),
-    ...document.querySelectorAll('.card, .modal, .sidebar, .navbar')
+    ...Array.from(document.querySelectorAll('.theme-background, [style*="--"], [class*="bg-"], [class*="text-"]')),
+    ...Array.from(document.querySelectorAll('button, input, select, textarea, a')),
+    ...Array.from(document.querySelectorAll('.card, .modal, .sidebar, .navbar'))
   ];
 
   elementsChecked = themedElements.length;

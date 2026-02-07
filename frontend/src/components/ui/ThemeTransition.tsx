@@ -27,7 +27,7 @@ const ThemeTransition: React.FC<ThemeTransitionProps> = ({
   const getVariants = () => {
     const baseTransition = {
       duration: duration,
-      ease: 'easeInOut'
+      ease: 'easeInOut' as const
     };
 
     switch (mode) {
@@ -152,13 +152,15 @@ export const ThemeSwitchTransition: React.FC<ThemeSwitchTransitionProps> = ({
       <motion.div
         key={mode} // Change key when theme mode changes
         initial={{ opacity: 0, filter: 'brightness(0.9)' }}
-        animate={{ opacity: 1, filter: 'brightness(1)' }}
+        animate={{ 
+          opacity: 1, 
+          filter: 'brightness(1)',
+          backgroundColor: theme.colors.background
+        }}
         exit={{ opacity: 0, filter: 'brightness(0.9)' }}
         transition={{
           duration: 0.3,
-          ease: 'easeInOut',
-          // Slightly different animation based on theme mode
-          backgroundColor: theme.colors.background
+          ease: 'easeInOut' as const,
         }}
         className={className}
       >

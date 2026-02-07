@@ -60,7 +60,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, inputValue, 
         className="p-2 rounded-full font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 transition-opacity hover:opacity-90 disabled:opacity-50 flex items-center justify-center"
         style={{
           backgroundColor: theme.colors.accent,
-          color: theme.colors.onAccent,
+          color: theme.colors.text.primary,
         }}
         title="Send message"
       >

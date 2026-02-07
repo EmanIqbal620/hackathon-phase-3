@@ -45,7 +45,7 @@ const StatisticCard: React.FC<StatisticCardProps> = ({
         <div>
           <p
             className="text-sm"
-            style={{ color: theme.colors.mutedText }}
+            style={{ color: theme.colors.text.muted }}
           >
             {title}
           </p>

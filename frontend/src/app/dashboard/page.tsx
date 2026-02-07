@@ -312,10 +312,6 @@ const DashboardPage: React.FC = () => {
             ) : (
               <SmartSuggestions
                 tasks={tasks}
-                onSuggestionSelect={(suggestion) => {
-                  // Handle suggestion selection
-                  console.log('Suggestion selected:', suggestion);
-                }}
               />
             )}
           </div>

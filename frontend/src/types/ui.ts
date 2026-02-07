@@ -67,7 +67,7 @@ export interface ThemeToggleProps {
 }
 
 export interface SkeletonLoaderProps {
-  type: 'card' | 'text' | 'avatar' | 'image';
+  type: 'card' | 'text' | 'avatar' | 'image' | 'button' | 'input' | 'list-item';
   width?: string | number;
   height?: string | number;
   count?: number;

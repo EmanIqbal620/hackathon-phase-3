@@ -9,18 +9,7 @@ import { LineChart, Line, BarChart, Bar, PieChart, Pie, XAxis, YAxis, CartesianG
 import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval } from 'date-fns';
 import TaskAnalytics from './TaskAnalytics';
 import SmartSuggestions from './SmartSuggestions';
-
-interface Task {
-  id: string;
-  title: string;
-  description?: string;
-  is_completed: boolean;
-  created_at: string;
-  completed_at?: string;
-  due_date?: string;
-  priority: 'low' | 'medium' | 'high';
-  category?: string;
-}
+import { Task } from '@/types/task';
 
 interface AnalyticsDashboardProps {
   tasks: Task[];
@@ -268,7 +257,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ tasks }) => {
                 labelLine={false}
                 outerRadius={80}
                 dataKey="value"
-                label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                label={({ name, percent }) => `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`}
               >
                 {completionData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={index === 0 ? theme.colors.accent : '#10b981'} />

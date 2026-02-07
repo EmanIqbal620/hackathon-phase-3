@@ -16,7 +16,6 @@ vi.mock('../contexts/ThemeContext', () => ({
     theme: {
       colors: {
         accent: '#4B0076',
-        onAccent: '#FFFFFF',
         surface: '#1A1B1B',
         border: '#4B0076',
         text: { primary: '#FFFFFF' },

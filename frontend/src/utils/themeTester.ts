@@ -38,7 +38,7 @@ export const validateThemeTokens = (theme: ThemeConfig): {
     requiredColors.forEach(color => {
       if (!(color in theme.colors)) {
         missingTokens.push(`colors.${color}`);
-      } else if (typeof theme.colors[color] !== 'string') {
+      } else if (typeof (theme.colors as any)[color] !== 'string') {
         invalidValues.push(`colors.${color}`);
       }
     });
@@ -50,7 +50,7 @@ export const validateThemeTokens = (theme: ThemeConfig): {
       requiredTextColors.forEach(textColor => {
         if (!(textColor in theme.colors.text)) {
           missingTokens.push(`colors.text.${textColor}`);
-        } else if (typeof theme.colors.text[textColor] !== 'string') {
+        } else if (typeof (theme.colors.text as any)[textColor] !== 'string') {
           invalidValues.push(`colors.text.${textColor}`);
         }
       });
@@ -255,7 +255,7 @@ export const runThemeVerification = (theme: ThemeConfig, testElements: HTMLEleme
   const tokenValidation = validateThemeTokens(theme);
   const contrastValidation = validateThemeContrast(theme);
   const performanceTests = testThemePerformance(theme, testElements);
-  const consistencyTests = testThemeConsistency(theme, '*[data-themed]');
+  const consistencyTests = verifyThemeConsistency(theme, '*[data-themed]');
 
   // Calculate overall score
   const maxPossibleIssues = 100; // Arbitrary max for scoring

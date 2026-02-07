@@ -11,6 +11,8 @@ interface SessionData {
 }
 
 class SessionManager {
+  private static readonly USER_KEY = 'user_data';
+
   /**
    * Stores the JWT token and user data in local storage
    * @param token - The JWT token to store
@@ -33,7 +35,7 @@ class SessionManager {
       expiresAt,
     };
 
-    localStorage.setItem('user_data', JSON.stringify(sessionData));
+    localStorage.setItem(this.USER_KEY, JSON.stringify(sessionData));
   }
 
   /**
@@ -42,7 +44,7 @@ class SessionManager {
    */
   static getSession(): SessionData | null {
     try {
-      const sessionDataString = localStorage.getItem('user_data');
+      const sessionDataString = localStorage.getItem(this.USER_KEY);
       if (!sessionDataString) {
         return null;
       }
@@ -91,7 +93,7 @@ class SessionManager {
    */
   static clearSession(): void {
     clearTokens();
-    localStorage.removeItem('user_data');
+    localStorage.removeItem(this.USER_KEY);
   }
 
   /**

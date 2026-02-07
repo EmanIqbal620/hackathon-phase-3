@@ -5,18 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import TaskCard from './TaskCard';
 import SkeletonLoader from '../ui/SkeletonLoader';
 import { useTheme } from '@/contexts/ThemeContext';
-
-interface Task {
-  id: string;
-  title: string;
-  description?: string;
-  isCompleted: boolean;
-  priority?: 'low' | 'medium' | 'high';
-  dueDate?: string;
-  createdAt: string;
-  updatedAt: string;
-  completedAt?: string;
-}
+import { Task } from '@/types/task';
 
 interface TaskListProps {
   tasks: Task[];
@@ -26,6 +15,19 @@ interface TaskListProps {
   loading?: boolean;
   showPriorityIndicator?: boolean;
   showDueDate?: boolean;
+}
+
+// Define a type that matches what TaskCard expects
+interface TaskForCard {
+  id: string;
+  title: string;
+  description?: string;
+  isCompleted: boolean;
+  priority?: 'low' | 'medium' | 'high';
+  dueDate?: string;
+  createdAt: string;
+  updatedAt: string;
+  completedAt?: string;
 }
 
 const TaskListComponent: React.FC<TaskListProps> = ({
@@ -39,7 +41,7 @@ const TaskListComponent: React.FC<TaskListProps> = ({
 }) => {
   const { theme } = useTheme();
 
-  /* Loading state */
+  // Loading state
   if (loading) {
     return (
       <div className="space-y-4">
@@ -48,7 +50,7 @@ const TaskListComponent: React.FC<TaskListProps> = ({
     );
   }
 
-  /* Empty state */
+  // Empty state
   if (tasks.length === 0) {
     return (
       <div className="text-center py-12">
@@ -98,7 +100,7 @@ const TaskListComponent: React.FC<TaskListProps> = ({
     );
   }
 
-  /* Task list */
+  // Task list
   return (
     <div
       className="space-y-3 sm:space-y-4 rounded-xl p-1"
@@ -110,24 +112,36 @@ const TaskListComponent: React.FC<TaskListProps> = ({
       }}
     >
       <AnimatePresence initial={false}>
-        {tasks.map((task) => (
-          <motion.div
-            key={task.id}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            transition={{ duration: 0.25, ease: 'easeOut' }}
-          >
-            <TaskCard
-              task={task}
-              onToggle={onToggle}
-              onEdit={onEdit}
-              onDelete={onDelete}
-              showPriorityIndicator={showPriorityIndicator}
-              showDueDate={showDueDate}
-            />
-          </motion.div>
-        ))}
+        {tasks.map((task) => {
+          // Map backend snake_case to TaskCard expected camelCase
+          const taskForCard: TaskForCard = {
+            ...task,
+            isCompleted: task.is_completed,
+            createdAt: task.created_at,
+            updatedAt: task.updated_at,
+            completedAt: task.completed_at ? task.completed_at : undefined, // null -> undefined
+            dueDate: task.due_date ? task.due_date : undefined,         // null -> undefined
+          };
+
+          return (
+            <motion.div
+              key={task.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+            >
+              <TaskCard
+                task={taskForCard}
+                onToggle={onToggle}
+                onEdit={onEdit}
+                onDelete={onDelete}
+                showPriorityIndicator={showPriorityIndicator}
+                showDueDate={showDueDate}
+              />
+            </motion.div>
+          );
+        })}
       </AnimatePresence>
     </div>
   );

@@ -96,12 +96,12 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
           borderColor: task.isCompleted
             ? theme.colors.accent
             : theme.mode === 'dark'
-              ? theme.colors.mutedText
+              ? theme.colors.text.muted
               : '#9ca3af', // light gray border
           color: task.isCompleted
             ? theme.colors.accent
             : theme.mode === 'dark'
-              ? theme.colors.text
+              ? theme.colors.text.primary
               : '#374151', // dark gray text
         }}
         aria-label={task.isCompleted ? 'Mark as incomplete' : 'Mark as complete'}
@@ -198,7 +198,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
           onClick={() => onEdit(task.id)}
           style={{
             color: theme.mode === 'dark'
-              ? theme.colors.mutedText
+              ? theme.colors.text.muted
               : '#6b7280', // gray-600
           }}
           className="hover:text-purple-500 dark:hover:text-purple-400 transition-colors"
@@ -211,7 +211,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
           onClick={() => onDelete(task.id)}
           style={{
             color: theme.mode === 'dark'
-              ? theme.colors.mutedText
+              ? theme.colors.text.muted
               : '#6b7280', // gray-600
           }}
           className="hover:text-red-500 transition-colors"

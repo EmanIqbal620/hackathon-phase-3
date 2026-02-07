@@ -12,6 +12,7 @@ interface AuthContextType {
   register: (name: string, email: string, password: string) => Promise<void>
   logout: () => void
   isAuthenticated: () => boolean
+  getToken: () => string | null
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -121,6 +122,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     register,
     logout,
     isAuthenticated,
+    getToken: () => tokenManager.getAccessToken(),
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

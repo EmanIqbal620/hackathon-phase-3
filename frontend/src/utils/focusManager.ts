@@ -127,7 +127,7 @@ export const getLastFocusedElement = (): HTMLElement | null => {
  * @returns True if the element is focusable
  */
 export const isFocusable = (element: HTMLElement): boolean => {
-  if (element.tabIndex < 0 || element.disabled || element.hidden) {
+  if (element.tabIndex < 0 || (element as any).disabled || element.hidden) {
     return false;
   }
 

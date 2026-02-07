@@ -26,7 +26,7 @@ const AnimatedWrapper: React.FC<AnimatedWrapperProps> = ({
     const baseTransition = {
       duration: duration,
       delay: delay,
-      ease: 'easeOut'
+      ease: 'easeOut' as const
     };
 
     switch (animationType) {
@@ -67,7 +67,7 @@ const AnimatedWrapper: React.FC<AnimatedWrapperProps> = ({
             opacity: 1,
             transition: {
               ...baseTransition,
-              type: 'spring',
+              type: 'spring' as const,
               stiffness: 100,
               damping: 10
             }

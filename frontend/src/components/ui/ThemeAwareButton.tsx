@@ -73,7 +73,7 @@ const ThemeAwareButton: React.FC<ButtonProps> = ({
       boxShadow: `0 4px 6px -1px ${theme.colors.accent}40, 0 2px 4px -1px ${theme.colors.accent}20`
     }),
     ...(variant !== 'primary' && {
-      boxShadow: `0 1px 3px 0 ${theme.colors.shadow}, 0 1px 2px -1px ${theme.colors.shadow}`
+      boxShadow: theme.shadows.soft
     })
   };
 

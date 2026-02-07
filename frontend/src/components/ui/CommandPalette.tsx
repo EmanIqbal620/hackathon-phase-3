@@ -63,6 +63,27 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
     }
   }, [isOpen]);
 
+  const filteredCommands = commands.filter(cmd =>
+    cmd.title.toLowerCase().includes(inputValue.toLowerCase()) ||
+    cmd.description.toLowerCase().includes(inputValue.toLowerCase()) ||
+    cmd.category.toLowerCase().includes(inputValue.toLowerCase())
+  );
+
+  const handleClose = () => {
+    setInputValue('');
+    setSelectedIndex(0);
+    if (externalIsOpen !== undefined) {
+      onClose?.();
+    } else {
+      setInternalIsOpen(false);
+    }
+  };
+
+  const handleSelect = (command: Command) => {
+    command.action();
+    handleClose();
+  };
+
   // Handle keyboard navigation
   useEffect(() => {
     if (!isOpen) return;
@@ -93,27 +114,6 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
     window.addEventListener('keydown', handleKeyDown as any);
     return () => window.removeEventListener('keydown', handleKeyDown as any);
   }, [isOpen, selectedIndex, filteredCommands]);
-
-  const handleClose = () => {
-    setInputValue('');
-    setSelectedIndex(0);
-    if (externalIsOpen !== undefined) {
-      onClose?.();
-    } else {
-      setInternalIsOpen(false);
-    }
-  };
-
-  const filteredCommands = commands.filter(cmd =>
-    cmd.title.toLowerCase().includes(inputValue.toLowerCase()) ||
-    cmd.description.toLowerCase().includes(inputValue.toLowerCase()) ||
-    cmd.category.toLowerCase().includes(inputValue.toLowerCase())
-  );
-
-  const handleSelect = (command: Command) => {
-    command.action();
-    handleClose();
-  };
 
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {

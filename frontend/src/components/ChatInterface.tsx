@@ -14,6 +14,8 @@ import {
 import MatteCard from './ui/MatteCard';
 import ThemeAwareButton from './ui/ThemeAwareButton';
 import { useToast } from '@/contexts/ToastContext';
+import { Task } from '@/types/task';
+import { NotificationTypeEnum } from '@/types/ui';
 
 interface Message {
   id: string;
@@ -48,7 +50,7 @@ interface ChatAnalytics {
 interface ChatProps {
   userId: string;
   token: string;
-  tasks?: any[]; // Pass tasks for analytics and suggestions
+  tasks?: Task[]; // Pass tasks for analytics and suggestions
 }
 
 const ChatInterface: React.FC<ChatProps> = ({ userId, token, tasks = [] }) => {
@@ -198,7 +200,7 @@ const ChatInterface: React.FC<ChatProps> = ({ userId, token, tasks = [] }) => {
       };
 
       setMessages(prev => [...prev, errorMessage]);
-      showToast('Error sending message', 'error');
+      showToast('Error sending message', NotificationTypeEnum.ERROR);
     } finally {
       setIsLoading(false);
     }
@@ -330,7 +332,6 @@ const ChatInterface: React.FC<ChatProps> = ({ userId, token, tasks = [] }) => {
           {showAnalytics && analytics && (
             <MatteCard
               className="m-4 p-4"
-              variant="outlined"
             >
               <div className="flex items-center mb-2">
                 <TrendingUpIcon className="h-4 w-4 mr-2" style={{ color: theme.colors.accent }} />

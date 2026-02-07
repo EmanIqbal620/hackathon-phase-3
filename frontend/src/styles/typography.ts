@@ -142,7 +142,7 @@ export const getResponsiveTypography = (
   mobile: keyof TypographyScale,
   tablet: keyof TypographyScale,
   desktop: keyof TypographyScale
-): { [key: string]: string } => {
+): { [key: string]: string | { fontSize: string } } => {
   return {
     fontSize: typographyScale[mobile],
     [`@media (min-width: 640px)`]: {

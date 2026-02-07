@@ -1,4 +1,4 @@
-import { axe, AxeResults } from 'axe-core';
+import axe, { AxeResults } from 'axe-core';
 
 /**
  * Accessibility Audit Utility

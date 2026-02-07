@@ -3,7 +3,7 @@
  * Provides functions for testing micro-features for accessibility and performance impact
  */
 
-import { useReducedMotion } from '@/hooks/useReducedMotion';
+
 
 interface MicroFeatureTestConfig {
   featureName: string;
