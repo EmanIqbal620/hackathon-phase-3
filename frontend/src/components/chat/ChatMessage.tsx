@@ -9,22 +9,33 @@ interface ChatMessageProps {
   isOwnMessage: boolean;
 }
 
-const ChatMessage: React.FC<ChatMessageProps> = ({ message, isOwnMessage }) => {
+const ChatMessage: React.FC<ChatMessageProps> = ({
+  message,
+  isOwnMessage,
+}) => {
   const { theme } = useTheme();
 
   // Format timestamp
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   };
 
-  // Determine if this is a success/action message based on emoji
-  const isSuccessMessage = message.content.startsWith('✅') ||
-                           message.content.startsWith('🗑️') ||
-                           message.content.startsWith('✏️') ||
-                           message.content.startsWith('📋');
+  // Detect success/action messages
+  const isSuccessMessage =
+    message.content.startsWith('✅') ||
+    message.content.startsWith('🗑️') ||
+    message.content.startsWith('✏️') ||
+    message.content.startsWith('📋');
 
   return (
-    <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-2 slide-in-from-bottom`}>
+    <div
+      className={`flex ${
+        isOwnMessage ? 'justify-end' : 'justify-start'
+      } mb-2 slide-in-from-bottom`}
+    >
       {!isOwnMessage && (
         <div className="mr-2 flex-shrink-0">
           {/* Assistant Avatar */}
@@ -32,6 +43,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isOwnMessage }) => {
             className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
             style={{
               backgroundColor: theme.colors.accent,
+              // FIX: removed non-existent `onAccent`
               color: theme.colors.text.primary,
             }}
           >
@@ -42,29 +54,30 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isOwnMessage }) => {
 
       <div className="flex flex-col max-w-[85%]">
         {!isOwnMessage && (
-          <div className="text-xs font-semibold mb-1" style={{
-            color: theme.colors.text.primary,
-            fontWeight: '600'
-          }}>
+          <div
+            className="text-xs font-semibold mb-1"
+            style={{
+              color: theme.colors.text.primary,
+              fontWeight: '600',
+            }}
+          >
             TaskBot
           </div>
         )}
 
         <div
           className={`px-2 py-1.5 rounded-2xl transition-all duration-300 text-xs sm:text-sm ${
-            isOwnMessage
-              ? 'rounded-br-none'
-              : 'rounded-bl-none'
+            isOwnMessage ? 'rounded-br-none' : 'rounded-bl-none'
           }`}
           style={{
             backgroundColor: isOwnMessage
-              ? theme.colors.accent // User messages: strong accent color
+              ? theme.colors.accent
               : theme.mode === 'dark'
-                ? `${theme.colors.accent}20` // Dark mode: soft accent tint
-                : `${theme.colors.accent}10`, // Light mode: very light accent tint
+              ? `${theme.colors.accent}20`
+              : `${theme.colors.accent}10`,
             color: isOwnMessage
-              ? theme.colors.text.primary // User: primary text on accent
-              : theme.colors.text.primary, // Use theme text for both modes
+              ? theme.colors.text.primary
+              : theme.colors.text.primary,
             border: isOwnMessage
               ? 'none'
               : `1px solid ${theme.colors.border}`,
@@ -76,21 +89,23 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isOwnMessage }) => {
             style={{
               color: isOwnMessage
                 ? theme.colors.text.primary
-                : theme.colors.text.primary, // Use theme text for both modes
+                : theme.colors.text.primary,
               lineHeight: '1.4',
-              fontSize: '0.875rem'
+              fontSize: '0.875rem',
             }}
           >
             {message.content}
           </div>
 
           <div
-            className={`text-xs mt-1 ${isOwnMessage ? 'text-right' : 'text-left'}`}
+            className={`text-xs mt-1 ${
+              isOwnMessage ? 'text-right' : 'text-left'
+            }`}
             style={{
               color: isOwnMessage
                 ? `${theme.colors.text.primary}CC`
-                : theme.colors.text.muted, // Use theme muted text for both modes
-              marginTop: '0.25rem'
+                : theme.colors.text.muted,
+              marginTop: '0.25rem',
             }}
           >
             {formatTime(message.timestamp)}
@@ -100,15 +115,17 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isOwnMessage }) => {
 
       {isOwnMessage && (
         <div className="ml-2 flex-shrink-0">
-          {/* User Avatar - using initials or generic user icon */}
+          {/* User Avatar */}
           <div
             className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
             style={{
-              backgroundColor: theme.colors.accent, // Changed from mutedText to accent for better consistency
+              backgroundColor: theme.colors.accent,
               color: theme.colors.text.primary,
             }}
           >
-            {message.userId ? message.userId.charAt(0).toUpperCase() : 'U'}
+            {message.userId
+              ? message.userId.charAt(0).toUpperCase()
+              : 'U'}
           </div>
         </div>
       )}

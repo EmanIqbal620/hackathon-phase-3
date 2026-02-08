@@ -369,11 +369,8 @@ export const highContrastLightTheme: ThemeConfig = {
   },
 };
 
-// Export the theme configurations
-export const darkThemeConfig = darkTheme;
-export const lightThemeConfig = lightTheme;
-export const highContrastDarkThemeConfig = highContrastDarkTheme;
-export const highContrastLightThemeConfig = highContrastLightTheme;
+// Export the default theme (dark theme)
+export const themeConfig = darkTheme;
 
 // Export the theme configuration with both light and dark themes
 export interface ThemeConfig {
@@ -448,7 +445,7 @@ export interface ThemeConfig {
 // Helper function to get theme based on mode and high contrast preference
 export const getTheme = (mode: 'light' | 'dark', highContrast: boolean = false): ThemeConfig => {
   if (highContrast) {
-    return mode === 'light' ? highContrastLightThemeConfig : highContrastDarkThemeConfig;
+    return mode === 'light' ? highContrastLightTheme : highContrastDarkTheme;
   }
-  return mode === 'light' ? lightThemeConfig : darkThemeConfig;
+  return mode === 'light' ? lightTheme : darkTheme;
 };

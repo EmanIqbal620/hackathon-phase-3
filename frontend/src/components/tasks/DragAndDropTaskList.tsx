@@ -56,14 +56,14 @@ const DraggableTaskCard: React.FC<DraggableTaskCardProps> = ({
   const [{ isDragging }, drag] = useDrag({
     type: 'TASK',
     item: { index },
-    collect: (monitor) => ({
+    collect: (monitor: { isDragging: () => any; }) => ({
       isDragging: monitor.isDragging(),
     }),
   });
 
   const [, drop] = useDrop({
     accept: 'TASK',
-    hover(item: { index: number }, monitor) {
+    hover(item: { index: number }, monitor: { getClientOffset: () => any; }) {
       if (!ref.current) {
         return;
       }

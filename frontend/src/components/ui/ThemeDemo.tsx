@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
-import { validateThemeContrast } from '@/lib/utils';
+import { validateThemeContrast } from '../../lib/utils';
 
 const ThemeDemo: React.FC = () => {
   const { theme, mode, toggleTheme } = useTheme();
