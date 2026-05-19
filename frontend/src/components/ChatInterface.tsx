@@ -14,6 +14,7 @@ import {
 import MatteCard from './ui/MatteCard';
 import ThemeAwareButton from './ui/ThemeAwareButton';
 import { useToast } from '@/contexts/ToastContext';
+import { useTask } from '@/contexts/TaskContext';
 import { Task } from '@/types/task';
 import { NotificationTypeEnum } from '@/types/ui';
 
@@ -56,6 +57,7 @@ interface ChatProps {
 const ChatInterface: React.FC<ChatProps> = ({ userId, token, tasks = [] }) => {
   const { theme } = useTheme();
   const { showToast } = useToast();
+  const { fetchTasks } = useTask();
   const [inputValue, setInputValue] = useState<string>('');
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -141,7 +143,7 @@ const ChatInterface: React.FC<ChatProps> = ({ userId, token, tasks = [] }) => {
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) return;
 
-    // Add user message to the chat
+    // Add user message immediately (optimistic update)
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
@@ -150,12 +152,21 @@ const ChatInterface: React.FC<ChatProps> = ({ userId, token, tasks = [] }) => {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const messageToSend = inputValue;
     setInputValue('');
     setIsLoading(true);
 
+    // Use AbortController for 5s timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
     try {
-      // Call the backend API
-      const response = await fetch(`/api/${userId}/chat`, {
+      // OPTIMIZATION: Direct fetch with timeout
+      const rawApiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000').replace(/\/+$/, '');
+      // Avoid Vercel rewrite auth header issue: use direct backend URL for relative paths
+      const apiUrl = rawApiUrl.startsWith('/') ? 'https://emaniqbal-todoapp.hf.space' : rawApiUrl;
+      const baseUrl = apiUrl.endsWith('/api') ? apiUrl : `${apiUrl}/api`;
+      const response = await fetch(`${baseUrl}/chat-fast/`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -163,39 +174,55 @@ const ChatInterface: React.FC<ChatProps> = ({ userId, token, tasks = [] }) => {
         },
         body: JSON.stringify({
           conversation_id: conversationId || null,
-          message: inputValue,
+          message: messageToSend,
         }),
+        signal: controller.signal,
       });
 
+      clearTimeout(timeoutId);
+
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`HTTP ${response.status}`);
       }
 
       const data = await response.json();
 
-      // Update conversation ID if new conversation was created
+      // Update conversation ID if new
       if (data.conversation_id && !conversationId) {
         setConversationId(data.conversation_id.toString());
       }
 
-      // Add the assistant response to the chat with tool call results
+      // OPTIMIZATION: Clean response (remove technical details)
+      const cleanContent = data.response.split('\nActions Taken:')[0];
+
+      // Add assistant response
       const assistantMessage: Message = {
         id: `assistant-${Date.now()}`,
         role: 'assistant',
-        content: data.response,
+        content: cleanContent,
         createdAt: new Date(),
         toolCallResults: data.tool_calls || [],
       };
 
       setMessages(prev => [...prev, assistantMessage]);
+
+      // OPTIMIZATION: Parallel task refresh (don't block UI)
+      if (['add', 'create', 'complete', 'delete', 'remove', 'update'].some(
+            word => messageToSend.toLowerCase().includes(word)
+          )) {
+        // Refresh tasks in background
+        fetchTasks?.().catch(console.error);
+      }
+
     } catch (error) {
+      clearTimeout(timeoutId);
       console.error('Error sending message:', error);
 
-      // Add error message to the chat
+      // Add error message
       const errorMessage: Message = {
         id: `error-${Date.now()}`,
         role: 'assistant',
-        content: 'Sorry, I encountered an error processing your request. Please try again.',
+        content: error instanceof Error ? `Error: ${error.message}` : 'Sorry, I encountered an error.',
         createdAt: new Date(),
       };
 

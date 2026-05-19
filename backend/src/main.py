@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import SQLModel
 
 # Import routers
-from .api.routes import auth, user, tasks, chat
+from .api.routes import auth, user, tasks, chat, ai_agent
 from .api.routers import analytics
 
 app = FastAPI(
@@ -23,6 +23,7 @@ app.add_middleware(
         "http://127.0.0.1:8000",
         "http://localhost:3005",  # Additional frontend port
         "http://127.0.0.1:3005",  # Additional frontend port
+        "https://tobo-app-chatbot.vercel.app",  # Vercel frontend
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -34,6 +35,7 @@ app.include_router(auth.router, prefix="/api")
 app.include_router(user.router, prefix="/api")
 app.include_router(tasks.router, prefix="/api")
 app.include_router(chat.router, prefix="/api")
+app.include_router(ai_agent.router, prefix="/api")
 app.include_router(analytics.router, prefix="/api")
 
 # Public routes that should never require payment

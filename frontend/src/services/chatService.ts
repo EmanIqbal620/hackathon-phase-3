@@ -21,7 +21,13 @@ class ChatService {
 
   constructor() {
     // Use the backend API URL, defaulting to localhost:8000 for development
-    this.baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
+    const rawUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    // Remove trailing slash to prevent double slashes
+    const apiUrl = rawUrl.replace(/\/+$/, '');
+    // If relative path, use direct backend URL (avoids Vercel rewrite auth header issue)
+    const finalUrl = apiUrl.startsWith('/') ? 'https://emaniqbal-todoapp.hf.space' : apiUrl;
+    // Ensure we have the /api suffix for backend endpoints
+    this.baseUrl = finalUrl.endsWith('/api') ? finalUrl : `${finalUrl}/api`;
   }
 
   async sendMessage(userId: string, request: ChatRequest): Promise<ChatResponse> {
@@ -33,8 +39,8 @@ class ChatService {
         throw new Error('No authentication token found');
       }
 
-      // Full endpoint is http://localhost:8000/api/chat/{user_id}
-      const response = await fetch(`${this.baseUrl}/api/chat/${userId}`, {
+      // Use the regular chat endpoint (works reliably)
+      const response = await fetch(`${this.baseUrl}/chat/`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -65,8 +71,9 @@ class ChatService {
         throw new Error('No authentication token found');
       }
 
-      // Full endpoint is http://localhost:8000/api/chat/{user_id}/{conversation_id}
-      const response = await fetch(`${this.baseUrl}/api/chat/${userId}/${conversationId}`, {
+      // Full endpoint is http://localhost:8000/api/chat/{conversation_id}
+      // user_id is extracted from JWT token on the backend
+      const response = await fetch(`${this.baseUrl}/chat/${conversationId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
